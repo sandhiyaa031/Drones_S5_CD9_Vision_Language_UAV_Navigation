@@ -21,13 +21,13 @@
 
 ## Team Members
 
-| Name                | Roll Number      |
-| ------------------- | ---------------- |
-| PRANESH M           | CB.SC.U4AIE24345 |
-| SANDHIYA D          | CB.SC.U4AIE24353 |
+| Name | Roll Number |
+|---|---|
+| PRANESH M | CB.SC.U4AIE24345 |
+| SANDHIYA D | CB.SC.U4AIE24353 |
 | JENISHAA BHARATHI M | CB.SC.U4AIE24221 |
-| POOJA N             | CB.SC.U4AIE24242 |
-| NAVEEN K            | CB.SC.U4AIE24235 |
+| POOJA N | CB.SC.U4AIE24242 |
+| NAVEEN K | CB.SC.U4AIE24235 |
 
 ---
 
