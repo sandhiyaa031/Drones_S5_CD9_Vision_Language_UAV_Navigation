@@ -24,12 +24,14 @@
 
 ## Team Members
 
-| Name          | Roll Number      |
-| ------------- | ---------------- |
-| YOUR NAME     | YOUR ROLL NUMBER |
-| TEAM MEMBER 2 | ROLL NUMBER      |
-| TEAM MEMBER 3 | ROLL NUMBER      |
-| TEAM MEMBER 4 | ROLL NUMBER      |
+
+| Name                | Roll Number      |
+| ------------------- | ---------------- |
+| PRANESH M           | CB.SC.U4AIE24345 |
+| SANDHIYA D          | CB.SC.U4AIE24353 |
+| JENISHAA BHARATHI M | CB.SC.U4AIE24221 |
+| POOJA N             | CB.SC.U4AIE24242 |
+| NAVEEN K            | CB.SC.U4AIE24235 |
 
 ---
 
