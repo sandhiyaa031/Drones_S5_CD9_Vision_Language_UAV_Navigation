@@ -4,6 +4,8 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition
+from sensor_msgs.msg import LaserScan
+import math
 
 class FlightController(Node):
     def __init__(self):
@@ -22,26 +24,32 @@ class FlightController(Node):
             self.position_callback,
             px4_qos
         )
+        self.lidar_sub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
         self.timer = self.create_timer(0.1, self.control_loop)
         
         self.state = "ARMING"
         self.state_timer = 0.0
         self.last_state = ""
-        
         self.current_x = 0.0
         self.current_y = 0.0
         self.current_z = 0.0
-        
         self.target_x = 0.0
         self.target_y = 0.0
         self.target_z = -2.0
-        
-        self.get_logger().info("Milestone 1: Full Sequence Controller Active")
+        self.obstacle_ahead = False
 
     def position_callback(self, msg):
         self.current_x = msg.x
         self.current_y = msg.y
         self.current_z = msg.z
+
+    def lidar_callback(self, msg):
+        ranges = msg.ranges
+        if not ranges:
+            return
+        front_ranges = ranges[-20:] + ranges[:20]
+        min_dist = min([r for r in front_ranges if not math.isinf(r) and not math.isnan(r)] + [float('inf')])
+        self.obstacle_ahead = min_dist < 1.5
 
     def control_loop(self):
         offboard_msg = OffboardControlMode()
@@ -71,37 +79,24 @@ class FlightController(Node):
             self.target_y = 0.0
             self.target_z = -2.0
             if self.current_z < -1.5: 
-                self.state = "HOVER"
+                self.state = "EXPLORE"
                 self.state_timer = 0.0
 
-        elif self.state == "HOVER":
-            if self.state_timer >= 3.0:
-                self.state = "WAYPOINT"
+        elif self.state == "EXPLORE":
+            if self.obstacle_ahead:
+                self.state = "AVOID"
                 self.state_timer = 0.0
+            else:
+                self.target_x += 0.05
+                self.target_y = 0.0
+                self.target_z = -2.0
 
-        elif self.state == "WAYPOINT":
-            self.target_x = 3.0
-            self.target_y = 2.0
-            self.target_z = -2.0
-            dist = ((self.current_x - 3.0)**2 + (self.current_y - 2.0)**2)**0.5
-            if dist < 0.5:
-                self.state = "RETURN"
+        elif self.state == "AVOID":
+            if not self.obstacle_ahead:
+                self.state = "EXPLORE"
                 self.state_timer = 0.0
-
-        elif self.state == "RETURN":
-            self.target_x = 0.0
-            self.target_y = 0.0
-            self.target_z = -2.0
-            dist = ((self.current_x - 0.0)**2 + (self.current_y - 0.0)**2)**0.5
-            if dist < 0.5:
-                self.state = "LAND"
-                self.state_timer = 0.0
-
-        elif self.state == "LAND":
-            self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_NAV_LAND)
-            if self.current_z > -0.2 and self.state_timer > 3.0:
-                self.state = "COMPLETED"
-                self.get_logger().info("Milestone 1 Complete: Landed safely.")
+            else:
+                self.target_y += 0.05
 
         if self.state not in ["LAND", "COMPLETED"]:
             setpoint_msg = TrajectorySetpoint()
