@@ -2,7 +2,7 @@
   <img src="amrita.png" alt="Logo" width="400"/>
 </p>
 
-# Vision-Language UAV Navigation for GPS-Denied Environments
+#  Vision-Language UAV Navigation for GPS-Denied Environments
 
 ### Vision-Language Navigation | UAV | Computer Vision | GPS-Denied Navigation | ROS 2 | PX4 | Gazebo
 
