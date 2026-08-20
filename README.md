@@ -198,6 +198,10 @@ where $\epsilon$ is the allowed position error.
 
 
 
+https://github.com/user-attachments/assets/437d402a-7b3b-4a8a-8b44-ca0b5fdd62d4
+
+
+
 ## Base Paper
 
 This project is inspired by the UAV Vision-Language Navigation problem studied in:
