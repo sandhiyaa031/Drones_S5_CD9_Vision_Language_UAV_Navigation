@@ -2,7 +2,7 @@
 
 <p align="center">
 
-<img src="Images/logo-branding-amrita-universiy-2024.jpg" alt="Amrita Vishwa Vidyapeetham" width="900">
+<img src="amrita.png" alt="Amrita Vishwa Vidyapeetham" width="900">
 
 </p>
 
