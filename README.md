@@ -197,17 +197,50 @@ The objective is to develop a modular UAV navigation framework that combines **n
 
 # References
 
-- **PX4 Documentation:** https://docs.px4.io/
-- **ROS 2 Documentation:** https://docs.ros.org/
-- **Gazebo Documentation:** https://gazebosim.org/docs
-- **QGroundControl Documentation:** https://docs.qgroundcontrol.com/
-- **gym-pybullet-drones:** https://github.com/utiasDSL/gym-pybullet-drones
-- **OpenCV Documentation:** https://docs.opencv.org/
+- **Base Paper — Towards Realistic UAV Vision-Language Navigation: Platform, Benchmark, and Methodology (TravelUAV)**  
+  https://arxiv.org/pdf/2410.07087
 
-### SDD / PAP References
+- **TravelUAV GitHub Repository**  
+  https://github.com/buaa-colalab/TravelUAV
 
-- **SDD:** Software Design Document / System Design Document associated with the project.
+- **PX4 Documentation**  
+  https://docs.px4.io/
+
+- **ROS 2 Documentation**  
+  https://docs.ros.org/
+
+- **Gazebo Documentation**  
+  https://gazebosim.org/docs
+
+- **QGroundControl Documentation**  
+  https://docs.qgroundcontrol.com/
+
+- **gym-pybullet-drones**  
+  https://github.com/utiasDSL/gym-pybullet-drones
+
+- **OpenCV Documentation**  
+  https://docs.opencv.org/
+
+### Project Documents
+
+- **SDD:** Software Design Document associated with the project.
 - **PAP:** Project Approval/Proposal document associated with the project.
+
+---
+
+## Base Paper
+
+This project is inspired by the UAV Vision-Language Navigation problem studied in:
+
+> **Towards Realistic UAV Vision-Language Navigation: Platform, Benchmark, and Methodology**
+
+**Paper:**  
+https://arxiv.org/pdf/2410.07087
+
+**TravelUAV Repository:**  
+https://github.com/buaa-colalab/TravelUAV
+
+The paper provides the research foundation for the Vision-Language Navigation aspect of this project, while this repository develops an independent simulation and ROS 2–PX4 based implementation.
 
 ---
 
