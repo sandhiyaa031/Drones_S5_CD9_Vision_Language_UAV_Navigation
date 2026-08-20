@@ -195,38 +195,6 @@ d<\epsilon
 
 where $\epsilon$ is the allowed position error.
 
-# References
-
-- **Base Paper — Towards Realistic UAV Vision-Language Navigation: Platform, Benchmark, and Methodology (TravelUAV)**  
-  https://arxiv.org/pdf/2410.07087
-
-- **TravelUAV GitHub Repository**  
-  https://github.com/buaa-colalab/TravelUAV
-
-- **PX4 Documentation**  
-  https://docs.px4.io/
-
-- **ROS 2 Documentation**  
-  https://docs.ros.org/
-
-- **Gazebo Documentation**  
-  https://gazebosim.org/docs
-
-- **QGroundControl Documentation**  
-  https://docs.qgroundcontrol.com/
-
-- **gym-pybullet-drones**  
-  https://github.com/utiasDSL/gym-pybullet-drones
-
-- **OpenCV Documentation**  
-  https://docs.opencv.org/
-
-### Project Documents
-
-- **SDD:** Software Design Document associated with the project.
-- **PAP:** Project Approval/Proposal document associated with the project.
-
----
 
 ## Base Paper
 
