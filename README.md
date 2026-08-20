@@ -158,10 +158,48 @@ $$
 $$
 d=\sqrt{164}\approx12.81\;m
 $$
-
 ### Navigation
 
-The UAV generates intermediate position setpoints:
+Suppose the UAV is initially located at:
+
+```math
+P_{UAV}=(0,0,5)\;m
+```
+
+and the detected target is located at:
+
+```math
+P_{target}=(10,8,5)\;m
+```
+
+The position error is calculated as:
+
+```math
+e_p=P_{target}-P_{UAV}
+```
+
+Therefore:
+
+```math
+e_p=
+\begin{bmatrix}
+10\\
+8\\
+0
+\end{bmatrix}m
+```
+
+The Euclidean distance to the target is:
+
+```math
+d=\sqrt{(10-0)^2+(8-0)^2+(5-5)^2}
+```
+
+```math
+d=\sqrt{164}\approx12.81\;m
+```
+
+The UAV then generates intermediate position setpoints:
 
 ```text
 (0,0,5)
@@ -175,25 +213,17 @@ The UAV generates intermediate position setpoints:
 
 A position setpoint is represented as:
 
-$$
+```math
 W_i=[x_i,y_i,z_i,\psi_i]
-$$
+```
 
-The target is reached when:
+The UAV considers the target reached when:
 
-$$
-d < \epsilon
-$$
+```math
+d<\epsilon
+```
 
 where $\epsilon$ is the allowed position error.
-
----
-
-# Project Objective
-
-The objective is to develop a modular UAV navigation framework that combines **natural-language understanding, computer vision, localization, visual servoing, ROS 2, PX4, and simulation** to enable autonomous navigation in GPS-denied environments.
-
----
 
 # References
 
