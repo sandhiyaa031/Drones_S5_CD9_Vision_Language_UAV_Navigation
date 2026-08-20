@@ -1,6 +1,6 @@
-<div align="center">
-
-<img src="https://upload.wikimedia.org/wikipedia/en/0/0a/Amrita_Vishwa_Vidyapeetham_-_Logo.png" width="180">
+<p align="center">
+  <img src="amrita.png" alt="Logo" width="400"/>
+</p>
 
 # Vision-Language UAV Navigation for GPS-Denied Environments
 
