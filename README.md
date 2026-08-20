@@ -196,6 +196,10 @@ d<\epsilon
 where $\epsilon$ is the allowed position error.
 
 
+Uploading Screencast from 2026-08-18 21-46-16.mp4…
+
+
+
 ## Base Paper
 
 This project is inspired by the UAV Vision-Language Navigation problem studied in:
