@@ -129,50 +129,15 @@ where:
 
 Suppose:
 
-$$
-P_{UAV}=(0,0,5)\;m
-$$
-
-$$
-P_{target}=(10,8,5)\;m
-$$
-
-Then:
-
-$$
-e_p=P_{target}-P_{UAV}
-=
-\begin{bmatrix}
-10\\
-8\\
-0
-\end{bmatrix}m
-$$
-
-The distance to the target is:
-
-$$
-d=\sqrt{(10-0)^2+(8-0)^2+(5-5)^2}
-$$
-
-$$
-d=\sqrt{164}\approx12.81\;m
-$$
-### Navigation
-
-Suppose the UAV is initially located at:
-
 ```math
 P_{UAV}=(0,0,5)\;m
 ```
-
-and the detected target is located at:
 
 ```math
 P_{target}=(10,8,5)\;m
 ```
 
-The position error is calculated as:
+The position error is:
 
 ```math
 e_p=P_{target}-P_{UAV}
@@ -186,20 +151,25 @@ e_p=
 10\\
 8\\
 0
-\end{bmatrix}m
+\end{bmatrix}
+\;m
 ```
 
-The Euclidean distance to the target is:
+The distance to the target is:
 
 ```math
 d=\sqrt{(10-0)^2+(8-0)^2+(5-5)^2}
 ```
 
+Therefore:
+
 ```math
 d=\sqrt{164}\approx12.81\;m
 ```
 
-The UAV then generates intermediate position setpoints:
+### Navigation
+
+The UAV generates intermediate position setpoints:
 
 ```text
 (0,0,5)
