@@ -1,0 +1,39 @@
+# Camera Intrinsics and Calibration Parameters for GPS-Denied Visual Navigation
+image_width: 640
+image_height: 480
+camera_name: drone_forward_camera
+
+# Intrinsic camera matrix K: [[fx, 0, cx], [0, fy, cy], [0, 0, 1]]
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [525.0, 0.0, 320.0,
+         0.0, 525.0, 240.0,
+         0.0, 0.0, 1.0]
+
+# Distortion model and coefficients: [k1, k2, p1, p2, k3]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.0012, -0.0025, 0.0001, 0.0003, 0.0]
+
+# Rectification matrix R
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1.0, 0.0, 0.0,
+         0.0, 1.0, 0.0,
+         0.0, 0.0, 1.0]
+
+# Projection matrix P
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [525.0, 0.0, 320.0, 0.0,
+         0.0, 525.0, 240.0, 0.0,
+         0.0, 0.0, 1.0, 0.0]
+
+# Frame IDs
+frame_id: "camera_optical_frame"
+parent_frame_id: "camera_link"

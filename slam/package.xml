@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>gps_denied_nav</name>
+  <version>1.0.0</version>
+  <description>
+    GPS-Denied Navigation Stack for Autonomous UAVs (Member 4 Deliverable).
+    Provides real-time 6-DoF Visual Odometry, Multi-Sensor 15-State EKF Fusion,
+    TF2 Coordinate Frame Transformations (REP-103/105 ENU to NED MAVROS Bridge),
+    2D/3D Occupancy Grid Mapping, RTAB-Map / ORB-SLAM3 integration, and Trajectory Evaluation.
+  </description>
+  <maintainer email="member4@drone-team.org">Member 4 (GPS-Denied Navigation Engineer)</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- Build Dependencies -->
+  <buildtool_depend>ament_python</buildtool_depend>
+
+  <!-- Execution Dependencies -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>tf2_geometry_msgs</exec_depend>
+  <exec_depend>cv_bridge</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>mavros_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+
+  <!-- Testing Dependencies -->
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

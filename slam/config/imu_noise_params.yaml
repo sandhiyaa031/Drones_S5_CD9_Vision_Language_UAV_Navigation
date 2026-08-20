@@ -1,0 +1,20 @@
+# IMU Noise Characteristics & Allan Variance Parameters
+# Model: Bosch BMI088 / InvenSense MPU-9250 / Pixhawk 6C Onboard IMU
+
+imu_name: pixhawk_onboard_imu
+update_rate_hz: 100.0
+
+# Continuous-time noise spectral density
+accelerometer:
+  noise_density: 0.05       # [m/s^2 / sqrt(Hz)] (White noise)
+  random_walk: 0.0001       # [m/s^3 / sqrt(Hz)] (Bias instability)
+  bias_initial: [0.0, 0.0, 0.0]
+
+gyroscope:
+  noise_density: 0.005      # [rad/s / sqrt(Hz)] (White noise)
+  random_walk: 0.00001      # [rad/s^2 / sqrt(Hz)] (Bias instability)
+  bias_initial: [0.0, 0.0, 0.0]
+
+# Gravity model
+gravity_magnitude: 9.80665
+coordinate_frame: "ENU"    # "ENU" for ROS standard, "NED" for flight controller native
