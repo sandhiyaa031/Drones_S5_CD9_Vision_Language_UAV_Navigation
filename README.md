@@ -111,7 +111,7 @@ u_t
 
 where:
 
-* (L) = language instruction
+* (L) = language instructions
 * (I_t) = current visual observation
 * (s_t) = UAV state
 * (M) = environment map
