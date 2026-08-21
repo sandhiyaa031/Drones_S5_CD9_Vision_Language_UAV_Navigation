@@ -100,42 +100,6 @@ flowchart TD
 
 The system converts a natural-language mission into an autonomous UAV navigation task through a sequence of perception, localization, planning, and control stages.
 
-## Overall Flow
-
-```text
-Natural Language
-       ↓
-      VLM
-       ↓
-Semantic Target
-       ↓
-Grounding DINO
-       ↓
-2D Bounding Box
-       ↓
-Depth + Camera Geometry
-       ↓
-3D Target Point
-       ↓
-SLAM
-       ↓
-UAV Pose + Environment Map
-       ↓
-Semantic Memory
-       ↓
-Path Planner
-       ↓
-Trajectory / Waypoints
-       ↓
-ROS 2
-       ↓
-PX4 Offboard
-       ↓
-UAV
-       ↓
-New Camera + IMU Data
-       ↺
-```
 
 ## 1. Vision-Language Understanding
 
