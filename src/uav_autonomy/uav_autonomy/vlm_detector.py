@@ -7,6 +7,7 @@ import urllib.request
 
 import rclpy
 from rclpy.node import Node
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 
 from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseStamped
@@ -17,11 +18,19 @@ class VLMDetector(Node):
     def __init__(self):
         super().__init__('vlm_detector')
 
+        # Camera publisher (/camera/image_raw) is RELIABLE,
+        # so the subscriber must use a compatible QoS profile.
+        image_qos = QoSProfile(
+            reliability=ReliabilityPolicy.RELIABLE,
+            history=HistoryPolicy.KEEP_LAST,
+            depth=10
+        )
+
         self.image_sub = self.create_subscription(
             Image,
             '/camera/image_raw',
             self.image_callback,
-            10
+            image_qos
         )
 
         self.detection_pub = self.create_publisher(
@@ -34,6 +43,7 @@ class VLMDetector(Node):
 
         self.get_logger().info('========================================')
         self.get_logger().info(' VLM SURVIVOR DETECTOR')
+        self.get_logger().info(' Camera QoS: RELIABLE')
         self.get_logger().info(' Waiting for camera frames')
         self.get_logger().info('========================================')
 
@@ -45,6 +55,12 @@ class VLMDetector(Node):
         self.busy = True
 
         try:
+            self.get_logger().info(
+                f'Camera frame received: '
+                f'{msg.width}x{msg.height}, encoding={msg.encoding}',
+                throttle_duration_sec=5.0
+            )
+
             image = self.image_to_base64(msg)
 
             result = self.query_vlm(image)
@@ -71,7 +87,6 @@ class VLMDetector(Node):
                 f'Unsupported camera encoding: {msg.encoding}'
             )
 
-        # Raw ROS image -> JPEG requires OpenCV.
         import cv2
         import numpy as np
 
@@ -100,9 +115,7 @@ class VLMDetector(Node):
 
     def query_vlm(self, image_b64):
 
-        endpoint = os.environ.get(
-            'VLM_ENDPOINT'
-        )
+        endpoint = os.environ.get('VLM_ENDPOINT')
 
         if not endpoint:
             self.get_logger().warn(

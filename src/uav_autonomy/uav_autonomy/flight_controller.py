@@ -4,27 +4,20 @@ import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from px4_msgs.msg import OffboardControlMode, TrajectorySetpoint, VehicleCommand, VehicleLocalPosition
-from sensor_msgs.msg import LaserScan
-import math
+from std_msgs.msg import String
 
 class FlightController(Node):
     def __init__(self):
         super().__init__('flight_controller')
-        px4_qos = QoSProfile(
-            reliability=ReliabilityPolicy.BEST_EFFORT,
-            history=HistoryPolicy.KEEP_LAST,
-            depth=5
-        )
-        self.offboard_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', 10)
-        self.trajectory_pub = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', 10)
-        self.command_pub = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', 10)
-        self.position_sub = self.create_subscription(
-            VehicleLocalPosition,
-            '/fmu/out/vehicle_local_position_v1',
-            self.position_callback,
-            px4_qos
-        )
-        self.lidar_sub = self.create_subscription(LaserScan, '/scan', self.lidar_callback, 10)
+        px4_qos = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, history=HistoryPolicy.KEEP_LAST, depth=5)
+        
+        self.offboard_pub = self.create_publisher(OffboardControlMode, '/fmu/in/offboard_control_mode', px4_qos)
+        self.trajectory_pub = self.create_publisher(TrajectorySetpoint, '/fmu/in/trajectory_setpoint', px4_qos)
+        self.command_pub = self.create_publisher(VehicleCommand, '/fmu/in/vehicle_command', px4_qos)
+        
+        self.position_sub = self.create_subscription(VehicleLocalPosition, '/fmu/out/vehicle_local_position', self.position_callback, px4_qos)
+        self.vlm_sub = self.create_subscription(String, '/rescue/vlm_detection', self.vlm_callback, 10)
+        
         self.timer = self.create_timer(0.1, self.control_loop)
         
         self.state = "ARMING"
@@ -36,20 +29,19 @@ class FlightController(Node):
         self.target_x = 0.0
         self.target_y = 0.0
         self.target_z = -2.0
-        self.obstacle_ahead = False
+        self.survivor_found = False
 
     def position_callback(self, msg):
         self.current_x = msg.x
         self.current_y = msg.y
         self.current_z = msg.z
 
-    def lidar_callback(self, msg):
-        ranges = msg.ranges
-        if not ranges:
-            return
-        front_ranges = ranges[-20:] + ranges[:20]
-        min_dist = min([r for r in front_ranges if not math.isinf(r) and not math.isnan(r)] + [float('inf')])
-        self.obstacle_ahead = min_dist < 1.5
+    def vlm_callback(self, msg):
+        if msg.data == "SURVIVOR_FOUND" and not self.survivor_found:
+            self.get_logger().info("FLIGHT CONTROLLER: Survivor coordinates locked! Halting exploration.")
+            self.survivor_found = True
+            self.state = "RESCUE_HOVER"
+            self.state_timer = 0.0
 
     def control_loop(self):
         offboard_msg = OffboardControlMode()
@@ -78,25 +70,23 @@ class FlightController(Node):
             self.target_x = 0.0
             self.target_y = 0.0
             self.target_z = -2.0
+            
+            if int(self.state_timer * 10) % 10 == 0:
+                self.get_logger().info(f"Forcing Takeoff... Alt: {self.current_z:.2f}m")
+                self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_DO_SET_MODE, param1=1.0, param2=6.0)
+                self.publish_vehicle_command(VehicleCommand.VEHICLE_CMD_COMPONENT_ARM_DISARM, param1=1.0)
+            
             if self.current_z < -1.5: 
                 self.state = "EXPLORE"
                 self.state_timer = 0.0
 
         elif self.state == "EXPLORE":
-            if self.obstacle_ahead:
-                self.state = "AVOID"
-                self.state_timer = 0.0
-            else:
-                self.target_x += 0.05
-                self.target_y = 0.0
-                self.target_z = -2.0
+            self.target_x += 0.02
+            self.target_y = 0.0
+            self.target_z = -2.0
 
-        elif self.state == "AVOID":
-            if not self.obstacle_ahead:
-                self.state = "EXPLORE"
-                self.state_timer = 0.0
-            else:
-                self.target_y += 0.05
+        elif self.state == "RESCUE_HOVER":
+            pass
 
         if self.state not in ["LAND", "COMPLETED"]:
             setpoint_msg = TrajectorySetpoint()
@@ -111,8 +101,8 @@ class FlightController(Node):
         msg.param2 = params.get("param2", 0.0)
         msg.target_system = 1
         msg.target_component = 1
-        msg.source_system = 1
-        msg.source_component = 1
+        msg.source_system = 255
+        msg.source_component = 0
         msg.from_external = True
         msg.timestamp = int(self.get_clock().now().nanoseconds / 1000)
         self.command_pub.publish(msg)
