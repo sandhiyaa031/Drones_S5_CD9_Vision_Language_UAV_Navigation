@@ -23,6 +23,7 @@ setup(
             'flight_controller = uav_autonomy.flight_controller:main',
             'state_bridge = uav_autonomy.state_bridge:main',
             'vlm_perception = uav_autonomy.vlm_perception:main',
+            'continuous_debris_spawner = uav_autonomy.continuous_debris_spawner:main',
         ],
     },
 )
