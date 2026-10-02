@@ -68,16 +68,6 @@ class RescueMission(Node):
             10
         )
 
-        # Dynamic debris detector publishes the current position.
-        # Velocity and acceleration are estimated from successive
-        # detections inside this controller.
-        self.dynamic_obstacle_sub = self.create_subscription(
-            PoseStamped,
-            '/dynamic_obstacle/detection',
-            self.dynamic_obstacle_callback,
-            10
-        )
-
         self.timer = self.create_timer(0.1, self.control_loop)
 
         # Mission state
@@ -91,39 +81,6 @@ class RescueMission(Node):
 
         # Sensors
         self.obstacle = False
-
-        # ==================================================
-        # DYNAMIC FALLING-OBJECT STATE
-        # ==================================================
-
-        self.dynamic_obstacle_seen = False
-
-        self.obstacle_x = 0.0
-        self.obstacle_y = 0.0
-        self.obstacle_z = 0.0
-
-        self.obstacle_vx = 0.0
-        self.obstacle_vy = 0.0
-        self.obstacle_vz = 0.0
-
-        self.obstacle_ax = 0.0
-        self.obstacle_ay = 0.0
-        self.obstacle_az = 0.0
-
-        self.obstacle_speed = 0.0
-
-        self.last_obstacle_time = None
-        self.last_obstacle_velocity = None
-
-        # Predict 3 seconds into the future.
-        self.prediction_horizon = 3.0
-        self.prediction_dt = 0.1
-
-        # Minimum UAV/debris separation.
-        self.safe_distance = 2.0
-
-        # Ignore stale detections.
-        self.dynamic_timeout = 0.75
 
         # Survivor detection
         self.survivor_found = False
@@ -214,226 +171,8 @@ class RescueMission(Node):
             f'({self.survivor_x:.2f}, {self.survivor_y:.2f})'
         )
 
-        # Safety has priority over the survivor target.
-        # A survivor detection must NOT cancel an active
-        # dynamic-obstacle avoidance maneuver.
-        if self.state == 'SEARCH':
+        if self.state in ('SEARCH', 'AVOID'):
             self.change_state('APPROACH')
-
-    # --------------------------------------------------
-    # DYNAMIC OBSTACLE TRACKING
-    # --------------------------------------------------
-
-    def dynamic_obstacle_callback(self, msg):
-
-        now = self.get_clock().now()
-
-        px = float(msg.pose.position.x)
-        py = float(msg.pose.position.y)
-        pz = float(msg.pose.position.z)
-
-        # ----------------------------------------------
-        # Estimate velocity from consecutive positions
-        # ----------------------------------------------
-
-        if self.last_obstacle_time is not None:
-
-            dt = (
-                now - self.last_obstacle_time
-            ).nanoseconds / 1e9
-
-            if 0.005 < dt < 1.0:
-
-                vx = (px - self.obstacle_x) / dt
-                vy = (py - self.obstacle_y) / dt
-                vz = (pz - self.obstacle_z) / dt
-
-                # --------------------------------------
-                # Estimate acceleration
-                # --------------------------------------
-
-                if self.last_obstacle_velocity is not None:
-
-                    ax = (
-                        vx - self.last_obstacle_velocity[0]
-                    ) / dt
-
-                    ay = (
-                        vy - self.last_obstacle_velocity[1]
-                    ) / dt
-
-                    az = (
-                        vz - self.last_obstacle_velocity[2]
-                    ) / dt
-
-                else:
-
-                    ax = 0.0
-                    ay = 0.0
-                    az = 0.0
-
-                # --------------------------------------
-                # Smooth noisy camera/depth estimates
-                # --------------------------------------
-
-                alpha = 0.35
-
-                self.obstacle_vx = (
-                    alpha * vx
-                    + (1.0 - alpha) * self.obstacle_vx
-                )
-
-                self.obstacle_vy = (
-                    alpha * vy
-                    + (1.0 - alpha) * self.obstacle_vy
-                )
-
-                self.obstacle_vz = (
-                    alpha * vz
-                    + (1.0 - alpha) * self.obstacle_vz
-                )
-
-                self.obstacle_ax = (
-                    alpha * ax
-                    + (1.0 - alpha) * self.obstacle_ax
-                )
-
-                self.obstacle_ay = (
-                    alpha * ay
-                    + (1.0 - alpha) * self.obstacle_ay
-                )
-
-                self.obstacle_az = (
-                    alpha * az
-                    + (1.0 - alpha) * self.obstacle_az
-                )
-
-        # ----------------------------------------------
-        # Update position
-        # ----------------------------------------------
-
-        self.obstacle_x = px
-        self.obstacle_y = py
-        self.obstacle_z = pz
-
-        self.obstacle_speed = math.sqrt(
-            self.obstacle_vx ** 2
-            + self.obstacle_vy ** 2
-            + self.obstacle_vz ** 2
-        )
-
-        self.last_obstacle_velocity = (
-            self.obstacle_vx,
-            self.obstacle_vy,
-            self.obstacle_vz
-        )
-
-        self.last_obstacle_time = now
-        self.dynamic_obstacle_seen = True
-
-        self.get_logger().info(
-            f'Dynamic object: '
-            f'P=({px:.2f},{py:.2f},{pz:.2f}) '
-            f'V=({self.obstacle_vx:.2f},'
-            f'{self.obstacle_vy:.2f},'
-            f'{self.obstacle_vz:.2f}) '
-            f'| speed={self.obstacle_speed:.2f} m/s',
-            throttle_duration_sec=1.0
-        )
-
-    def dynamic_obstacle_is_fresh(self):
-
-        if not self.dynamic_obstacle_seen:
-            return False
-
-        if self.last_obstacle_time is None:
-            return False
-
-        age = (
-            self.get_clock().now()
-            - self.last_obstacle_time
-        ).nanoseconds / 1e9
-
-        return age < self.dynamic_timeout
-
-    def predicted_obstacle_position(self, t):
-
-        # ==============================================
-        # KINEMATIC MODEL
-        #
-        # P(t) = P0 + V0*t + 1/2*A*t^2
-        # ==============================================
-
-        x = (
-            self.obstacle_x
-            + self.obstacle_vx * t
-            + 0.5 * self.obstacle_ax * t * t
-        )
-
-        y = (
-            self.obstacle_y
-            + self.obstacle_vy * t
-            + 0.5 * self.obstacle_ay * t * t
-        )
-
-        z = (
-            self.obstacle_z
-            + self.obstacle_vz * t
-            + 0.5 * self.obstacle_az * t * t
-        )
-
-        return x, y, z
-
-    def collision_prediction(self, target):
-
-        if not self.dynamic_obstacle_is_fresh():
-            return False, self.prediction_horizon
-
-        steps = int(
-            self.prediction_horizon
-            / self.prediction_dt
-        ) + 1
-
-        for i in range(steps):
-
-            t = i * self.prediction_dt
-
-            # Approximate UAV motion toward target.
-            alpha = min(
-                1.0,
-                t / self.prediction_horizon
-            )
-
-            drone_x = (
-                self.x
-                + alpha * (target[0] - self.x)
-            )
-
-            drone_y = (
-                self.y
-                + alpha * (target[1] - self.y)
-            )
-
-            drone_z = (
-                self.z
-                + alpha * (target[2] - self.z)
-            )
-
-            obstacle_x, obstacle_y, obstacle_z = (
-                self.predicted_obstacle_position(t)
-            )
-
-            distance = math.sqrt(
-                (drone_x - obstacle_x) ** 2
-                + (drone_y - obstacle_y) ** 2
-                + (drone_z - obstacle_z) ** 2
-            )
-
-            if distance < self.safe_distance:
-
-                return True, t
-
-        return False, self.prediction_horizon
 
     # --------------------------------------------------
     # OFFBOARD
@@ -592,56 +331,18 @@ class RescueMission(Node):
                 self.change_state('APPROACH')
                 return
 
-            self.target = self.search_points[
-                self.search_index
-            ]
-
-            # ------------------------------------------
-            # PREDICTIVE DYNAMIC-DEBRIS CHECK
-            # ------------------------------------------
-
-            collision, collision_time = (
-                self.collision_prediction(self.target)
-            )
-
-            if collision:
-
-                self.get_logger().warn(
-                    f'DYNAMIC DEBRIS COLLISION '
-                    f'PREDICTED IN {collision_time:.2f}s '
-                    f'| speed={self.obstacle_speed:.2f} m/s'
-                )
-
-                # Move laterally away from debris.
-                side = (
-                    -1.0
-                    if self.y >= self.obstacle_y
-                    else 1.0
-                )
-
-                self.avoid_target = (
-                    self.x,
-                    self.y + side * 3.0,
-                    self.z
-                )
-
-                self.change_state('AVOID')
-                return
-
-            # ------------------------------------------
-            # EXISTING STATIC LIDAR SAFETY
-            # ------------------------------------------
-
             if self.obstacle:
-
                 self.avoid_target = (
                     self.x,
                     self.y + 1.5,
                     -2.0
                 )
-
                 self.change_state('AVOID')
                 return
+
+            self.target = self.search_points[
+                self.search_index
+            ]
 
             self.publish_setpoint(*self.target)
 
@@ -677,65 +378,24 @@ class RescueMission(Node):
 
             if self.avoid_target is None:
 
-                side = (
-                    -1.0
-                    if self.y >= self.obstacle_y
-                    else 1.0
-                )
-
                 self.avoid_target = (
                     self.x,
-                    self.y + side * 3.0,
-                    self.z
-                )
-
-            # Re-check the escape waypoint.
-            collision, _ = (
-                self.collision_prediction(
-                    self.avoid_target
-                )
-            )
-
-            if collision:
-
-                side = (
-                    -1.0
-                    if self.y >= self.obstacle_y
-                    else 1.0
-                )
-
-                self.avoid_target = (
-                    self.x,
-                    self.y + side * 5.0,
-                    self.z
-                )
-
-                self.get_logger().warn(
-                    'Escape waypoint unsafe. '
-                    'Increasing lateral separation.'
+                    self.y + 1.5,
+                    -2.0
                 )
 
             self.publish_setpoint(
                 *self.avoid_target
             )
 
-            dynamic_clear = (
-                not self.dynamic_obstacle_is_fresh()
-            )
-
-            if dynamic_clear and not self.obstacle:
+            if not self.obstacle:
 
                 self.get_logger().info(
-                    'All obstacles cleared. '
-                    'Resuming mission.'
+                    'Obstacle cleared. Resuming search.'
                 )
 
                 self.avoid_target = None
-
-                if self.survivor_found:
-                    self.change_state('APPROACH')
-                else:
-                    self.change_state('SEARCH')
+                self.change_state('SEARCH')
 
         # --------------------------------------------------
         # APPROACH
@@ -748,48 +408,6 @@ class RescueMission(Node):
                 self.survivor_y,
                 -2.0
             )
-
-            # Survivor is the mission target, but collision
-            # avoidance always has higher priority.
-            collision, collision_time = (
-                self.collision_prediction(
-                    self.target
-                )
-            )
-
-            if collision:
-
-                self.get_logger().warn(
-                    f'DYNAMIC DEBRIS BLOCKING '
-                    f'SURVIVOR APPROACH '
-                    f'IN {collision_time:.2f}s'
-                )
-
-                side = (
-                    -1.0
-                    if self.y >= self.obstacle_y
-                    else 1.0
-                )
-
-                self.avoid_target = (
-                    self.x,
-                    self.y + side * 3.0,
-                    self.z
-                )
-
-                self.change_state('AVOID')
-                return
-
-            if self.obstacle:
-
-                self.avoid_target = (
-                    self.x,
-                    self.y + 1.5,
-                    self.z
-                )
-
-                self.change_state('AVOID')
-                return
 
             self.publish_setpoint(
                 *self.target
