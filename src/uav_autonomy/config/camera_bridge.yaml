@@ -1,0 +1,14 @@
+# ros_gz_bridge configuration: Gazebo camera -> ROS 2 (one direction only).
+# Topic names follow /world/<world>/model/<model>_<instance>/... as created by
+# PX4's gz_bridge for the collapsed_building_rescue world and
+# PX4_SIM_MODEL=gz_x500_mono_cam_down.
+- ros_topic_name: /camera/image_raw
+  gz_topic_name: /world/collapsed_building_rescue/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+- ros_topic_name: /camera/camera_info
+  gz_topic_name: /world/collapsed_building_rescue/model/x500_mono_cam_down_0/link/camera_link/sensor/camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS

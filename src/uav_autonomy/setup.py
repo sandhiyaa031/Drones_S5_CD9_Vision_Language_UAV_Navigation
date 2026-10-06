@@ -1,3 +1,5 @@
+"""Packaging metadata for the ROS 2 autonomy nodes."""
+
 from setuptools import find_packages, setup
 
 package_name = 'uav_autonomy'
@@ -10,6 +12,8 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/launch',
+         ['launch/p2_perception.launch.py']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,8 +26,22 @@ setup(
         'console_scripts': [
             'flight_controller = uav_autonomy.flight_controller:main',
             'state_bridge = uav_autonomy.state_bridge:main',
-            'vlm_perception = uav_autonomy.vlm_perception:main',
-            'continuous_debris_spawner = uav_autonomy.continuous_debris_spawner:main',
+            'debris_perception = uav_autonomy.debris_perception:main',
+            'debris_depth_detector = '
+            'uav_autonomy.debris_depth_detector:main',
+            'debris_tracker = uav_autonomy.debris_tracker:main',
+            'debris_predictor = uav_autonomy.debris_predictor:main',
+            'debris_risk = uav_autonomy.debris_risk_node:main',
+            'debris_avoidance = uav_autonomy.debris_avoidance_node:main',
+            # Phase 7 node. The earlier survivor_perception.py,
+            # vlm_perception.py and vlm_detector.py are kept in the
+            # package, unreferenced (docs/survivor_perception.md).
+            'survivor_perception = '
+            'uav_autonomy.survivor_perception_node:main',
+            'survivor_localization = '
+            'uav_autonomy.survivor_localization_node:main',
+            'continuous_debris_spawner = '
+            'uav_autonomy.continuous_debris_spawner:main',
         ],
     },
 )

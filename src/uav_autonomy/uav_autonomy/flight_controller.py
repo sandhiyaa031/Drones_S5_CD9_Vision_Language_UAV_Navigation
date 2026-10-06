@@ -24,6 +24,20 @@ from rclpy.qos import (
     ReliabilityPolicy,
 )
 
+from uav_interfaces.msg import AvoidanceCommand, FlightStatus
+
+from uav_autonomy.avoidance_interface import (
+    AvoidanceLimits,
+    limit_setpoint,
+    recovered,
+    validate_command,
+)
+from uav_autonomy.flight_safety import (
+    FlightSafetyMonitor,
+    PositionSample,
+    altitude_excursion,
+)
+
 
 class FlightController(Node):
     """Drive one bounded PX4 SITL flight through the Phase 0 sequence."""
@@ -67,6 +81,23 @@ class FlightController(Node):
     STATE_COMPLETE = 'COMPLETE'
     STATE_FAILSAFE = 'FAILSAFE'
 
+    # In-flight safety monitoring (docs/flight_safety.md). Additive: these
+    # checks can only move the controller to FAILSAFE, never to success.
+    ALTITUDE_EXCURSION_LIMIT_METERS = 1.0
+    SAFETY_MONITORED_STATES = (
+        STATE_TAKEOFF, STATE_WAYPOINT_1, STATE_WAYPOINT_2,
+        STATE_RETURN_HOME, STATE_HOLD, STATE_REQUEST_LAND, STATE_LANDING)
+    CRUISE_STATES = (
+        STATE_WAYPOINT_1, STATE_WAYPOINT_2, STATE_RETURN_HOME,
+        STATE_REQUEST_LAND)
+
+    # Debris avoidance (docs/debris_avoidance.md). The planner proposes a
+    # position setpoint; this controller validates it and remains the only
+    # node that commands PX4. Additive: without commands nothing changes.
+    AVOIDANCE_STATES = (
+        STATE_TAKEOFF, STATE_WAYPOINT_1, STATE_WAYPOINT_2,
+        STATE_RETURN_HOME, STATE_HOLD)
+
     def __init__(self):
         """Create verified PX4 publishers, subscribers, and mission state."""
         super().__init__('flight_controller')
@@ -77,6 +108,36 @@ class FlightController(Node):
         self.declare_parameter('waypoint_mission', False)
         self.waypoint_mission = bool(
             self.get_parameter('waypoint_mission').value)
+        # Mission geometry: the defaults are the validated Phase 0/1 values.
+        self.declare_parameter(
+            'target_altitude', float(self.TARGET_ALTITUDE_METERS))
+        self.TARGET_ALTITUDE_METERS = float(
+            self.get_parameter('target_altitude').value)
+        # Optional: a waypoint counts as reached only below this horizontal
+        # speed (0 = disabled, the Phase 0/1 behaviour). Without it the
+        # landing can be requested while the vehicle is still moving.
+        self.declare_parameter('arrival_max_speed', 0.0)
+        self.arrival_max_speed = float(
+            self.get_parameter('arrival_max_speed').value)
+        # Optional horizontal speed cap on mission motion (0 = off, the
+        # previous behaviour). PX4's position controller commands velocity
+        # = MPC_XY_P * position error, so the cap is applied by keeping the
+        # setpoint sent to PX4 no further than limit / MPC_XY_P ahead of
+        # the vehicle. The avoidance planner may request a lower cap
+        # (degraded perception, unconfirmed threat); a cap only restricts.
+        self.declare_parameter('transit_speed_limit', 0.0)
+        self.transit_speed_limit = float(
+            self.get_parameter('transit_speed_limit').value)
+        self.declare_parameter('hold_seconds', float(self.HOLD_SECONDS))
+        self.HOLD_SECONDS = float(self.get_parameter('hold_seconds').value)
+        for name in ('WAYPOINT_1_OFFSET_NORTH_METERS',
+                     'WAYPOINT_1_OFFSET_EAST_METERS',
+                     'WAYPOINT_2_OFFSET_NORTH_METERS',
+                     'WAYPOINT_2_OFFSET_EAST_METERS'):
+            param = name.lower().replace('_offset', '').replace(
+                '_meters', '')
+            self.declare_parameter(param, float(getattr(self, name)))
+            setattr(self, name, float(self.get_parameter(param).value))
 
         px4_qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
@@ -151,6 +212,22 @@ class FlightController(Node):
         self.last_altitude_log = 0.0
         self.last_wait_log = 0.0
         self.failure_reason = None
+        self.safety = FlightSafetyMonitor()
+
+        self.avoid_limits = AvoidanceLimits()
+        self.avoid_cmd = None
+        self.avoid_rx = 0.0
+        self.avoid_active = False
+        self.avoid_recovering = False
+        self.avoid_accepted = 0
+        self.avoid_rejected = 0
+        self.avoid_timeouts = 0
+        self.avoid_last_rejection = ''
+        self.avoid_sub = self.create_subscription(
+            AvoidanceCommand, '/perception/debris/avoidance_command',
+            self.avoidance_callback, 10)
+        self.status_pub = self.create_publisher(
+            FlightStatus, '/uav/flight_status', 10)
 
         self.timer = self.create_timer(self.TICK_SECONDS, self.control_loop)
         sequence = (
@@ -170,6 +247,12 @@ class FlightController(Node):
         self.position = msg
         self.last_position_rx = time.monotonic()
         self.position_sample_count += 1
+        # Every sample is checked (not only the latest one per control tick)
+        # so that a short impact spike between ticks is not missed.
+        if (self.state in self.SAFETY_MONITORED_STATES
+                and self.ground_z is not None):
+            self.safety.update(
+                PositionSample.from_msg(msg), self.ground_z - float(msg.z))
 
     def status_callback(self, msg):
         """Cache current PX4 status and preflight state."""
@@ -198,6 +281,125 @@ class FlightController(Node):
             self.get_logger().info(
                 f'Command {msg.command} ACK: '
                 f'{result_names.get(msg.result, str(msg.result))}')
+
+    def avoidance_callback(self, msg):
+        """Store the planner's latest proposal; it is validated each tick."""
+        self.avoid_cmd = msg
+        self.avoid_rx = time.monotonic()
+
+    def _update_avoidance(self, now):
+        """Decide whether the avoidance target replaces the mission one."""
+        was_active = self.avoid_active
+        active = False
+        cmd = self.avoid_cmd
+        if (cmd is not None
+                and now - self.avoid_rx > self.avoid_limits.command_timeout_s):
+            # Command timeout: the planner stopped talking. Its last
+            # proposal is dropped and the mission setpoint is in force.
+            if cmd.active:
+                self.avoid_timeouts += 1
+                self.get_logger().warning(
+                    'Avoidance command timed out '
+                    f'({now - self.avoid_rx:.2f} s without an update)')
+            cmd = self.avoid_cmd = None
+        if (cmd is not None and cmd.active and self.target_x is not None
+                and self.position is not None):
+            target = (cmd.target.x, cmd.target.y, cmd.target.z)
+            ok, reason = validate_command(
+                target,
+                (self.position.x, self.position.y, self.position.z),
+                self.ground_z, now - self.avoid_rx,
+                self.state in self.AVOIDANCE_STATES
+                and self.target_z != self.ground_z,
+                self.avoid_limits)
+            if ok:
+                active = True
+            elif reason != self.avoid_last_rejection or was_active:
+                self.avoid_rejected += 1
+                self.avoid_last_rejection = reason
+                self.get_logger().warning(
+                    f'Avoidance command refused: {reason}')
+        if active and not was_active:
+            self.avoid_accepted += 1
+            self.avoid_last_rejection = ''
+            self.get_logger().info(
+                f'AVOIDANCE accepted in {self.state}: target NED '
+                f'({cmd.target.x:.2f}, {cmd.target.y:.2f}, '
+                f'{cmd.target.z:.2f}) [{cmd.candidate}] {cmd.reason}')
+        if was_active and not active:
+            self.avoid_recovering = True
+            self.get_logger().info(
+                'AVOIDANCE ended; returning to the mission setpoint '
+                f'({self.target_x:.2f}, {self.target_y:.2f}, '
+                f'{self.target_z:.2f})')
+        self.avoid_active = active
+        if (self.avoid_recovering and not active
+                and self.position is not None and recovered(
+                    (self.position.x, self.position.y, self.position.z),
+                    (self.target_x, self.target_y, self.target_z),
+                    self.avoid_limits)):
+            self.avoid_recovering = False
+            self.get_logger().info('AVOIDANCE recovery complete; mission '
+                                   'setpoint reached again')
+        if self.state not in self.AVOIDANCE_STATES:
+            self.avoid_active = False
+            self.avoid_recovering = False
+
+    PX4_XY_P = 0.95                 # PX4 MPC_XY_P (default, not changed)
+    MIN_SPEED_LIMIT = 0.5           # a requested cap is never below this
+
+    def _speed_limit(self):
+        """Horizontal speed cap in force on the mission setpoint (0 = none)."""
+        limits = []
+        if self.transit_speed_limit > 0.0:
+            limits.append(self.transit_speed_limit)
+        cmd = self.avoid_cmd
+        if (cmd is not None and math.isfinite(cmd.speed_limit)
+                and cmd.speed_limit > 0.0):
+            limits.append(max(float(cmd.speed_limit), self.MIN_SPEED_LIMIT))
+        return min(limits) if limits else 0.0
+
+    def _commanded_target(self):
+        """Position setpoint to send: avoidance target if active."""
+        if self.avoid_active:
+            t = self.avoid_cmd.target
+            return float(t.x), float(t.y), float(t.z)
+        x, y = float(self.target_x), float(self.target_y)
+        if (self.position is not None
+                and self.state in self.AVOIDANCE_STATES):
+            x, y = limit_setpoint(
+                (self.position.x, self.position.y), (x, y),
+                self._speed_limit(), self.PX4_XY_P)
+        return x, y, float(self.target_z)
+
+    def _publish_status(self):
+        msg = FlightStatus()
+        if self.position is not None:
+            stamp_us = int(self.position.timestamp_sample)
+            msg.stamp.sec = stamp_us // 1_000_000
+            msg.stamp.nanosec = (stamp_us % 1_000_000) * 1000
+        msg.state = self.state
+        msg.airborne_mission = bool(
+            self.state in self.AVOIDANCE_STATES
+            and self.target_z is not None
+            and self.target_z != self.ground_z)
+        if self.target_x is not None:
+            (msg.mission_target.x, msg.mission_target.y,
+             msg.mission_target.z) = (float(self.target_x),
+                                      float(self.target_y),
+                                      float(self.target_z))
+            (msg.commanded.x, msg.commanded.y,
+             msg.commanded.z) = self._commanded_target()
+        msg.ground_valid = self.ground_z is not None
+        if self.ground_z is not None:
+            msg.ground_z = float(self.ground_z)
+        msg.speed_limit = float(self._speed_limit())
+        msg.avoidance_active = self.avoid_active
+        msg.avoidance_recovering = self.avoid_recovering
+        msg.avoidance_accepted = self.avoid_accepted
+        msg.avoidance_rejected = self.avoid_rejected
+        msg.last_rejection = self.avoid_last_rejection
+        self.status_pub.publish(msg)
 
     def land_callback(self, msg):
         """Cache PX4's landing detector output."""
@@ -230,8 +432,7 @@ class FlightController(Node):
             return
 
         setpoint = TrajectorySetpoint()
-        setpoint.position = [
-            float(self.target_x), float(self.target_y), float(self.target_z)]
+        setpoint.position = list(self._commanded_target())
         setpoint.yaw = float('nan')
         setpoint.timestamp = self._px4_timestamp()
         self.setpoint_pub.publish(setpoint)
@@ -322,6 +523,22 @@ class FlightController(Node):
         if not self._telemetry_fresh() and self.state != self.STATE_LANDING:
             self._fail('PX4 position/status telemetry became stale or invalid')
 
+    def _check_flight_safety(self):
+        """Enter FAILSAFE on impact, estimator fault, or altitude loss."""
+        if self.state not in self.SAFETY_MONITORED_STATES:
+            return
+        if self.safety.violation is not None:
+            self._fail(f'SAFETY: {self.safety.violation} '
+                       f'(detected in {self.state})')
+            return
+        if (self.state in self.CRUISE_STATES
+                and not (self.avoid_active or self.avoid_recovering)):
+            reason = altitude_excursion(
+                self._altitude_above_start(), self.TARGET_ALTITUDE_METERS,
+                self.ALTITUDE_EXCURSION_LIMIT_METERS)
+            if reason is not None:
+                self._fail(f'SAFETY: {reason} (detected in {self.state})')
+
     def control_loop(self):
         """Advance guarded PX4 mode, arm, takeoff, hold, and landing states."""
         if self.telemetry_only:
@@ -351,6 +568,9 @@ class FlightController(Node):
             return
 
         self._check_global_timeouts()
+        self._check_flight_safety()
+        self._update_avoidance(time.monotonic())
+        self._publish_status()
 
         # Maintain Offboard proof and the current safe position target until
         # PX4 has acknowledged the explicit AUTO LAND request.
@@ -455,6 +675,25 @@ class FlightController(Node):
                 self._fail('Timed out waiting for PX4 armed state')
             return
 
+        if (self.state in self.AVOIDANCE_STATES
+                and (self.avoid_active or self.avoid_recovering)):
+            # An avoidance manoeuvre (or the return from it) is in progress.
+            # The mission step is paused: its timers do not run and its
+            # arrival and tolerance tests are not evaluated.
+            if self.status.arming_state != VehicleStatus.ARMING_STATE_ARMED:
+                self._fail('PX4 disarmed during an avoidance manoeuvre')
+                return
+            if (self.status.nav_state
+                    != VehicleStatus.NAVIGATION_STATE_OFFBOARD):
+                self._fail('PX4 left Offboard during an avoidance manoeuvre')
+                return
+            self.state_started += self.TICK_SECONDS
+            if self.hold_started is not None:
+                self.hold_started += self.TICK_SECONDS
+            if self.waypoint_started is not None:
+                self.waypoint_started += self.TICK_SECONDS
+            return
+
         if self.state == self.STATE_TAKEOFF:
             if self.status.arming_state != VehicleStatus.ARMING_STATE_ARMED:
                 self._fail('Takeoff guard: PX4 reports disarmed')
@@ -467,7 +706,7 @@ class FlightController(Node):
                 self.target_z = self.ground_z - self.TARGET_ALTITUDE_METERS
                 self.get_logger().info(
                     f'Takeoff target: NED z={self.target_z:.2f} m '
-                    f'(3.00 m above start)')
+                    f'({self.TARGET_ALTITUDE_METERS:.2f} m above start)')
             altitude = self._altitude_above_start()
             if math.isfinite(altitude):
                 self.get_logger().info(
@@ -519,6 +758,10 @@ class FlightController(Node):
             if now - self.waypoint_started > self.WAYPOINT_TIMEOUT_SECONDS:
                 self._fail(
                     f'{self.state} timed out at {distance:.2f} m from target')
+                return
+            if (self.arrival_max_speed > 0.0 and math.hypot(
+                    float(self.position.vx), float(self.position.vy))
+                    > self.arrival_max_speed):
                 return
             if (distance > self.WAYPOINT_RADIUS_METERS
                     or not math.isfinite(altitude)

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Rescue UAV: PX4's unmodified x500 and mono_cam models (resolved from PX4's
+  model directory) plus the project-owned upward depth camera.
+
+  Include poses are expressed in the model frame. base_link sits at
+  (0, 0, 0.24) in that frame and the rotor plane at 0.30.
+
+  Downward mono camera: identical to PX4's x500_mono_cam_down
+                        (camera_link at model z 0.10, i.e. 0.14 below base_link).
+  Upward depth camera:  depth_up_link at model (0, 0, 0.39) = base_link
+                        (0, 0, +0.15), above the rotor plane.
+                        rpy (0, -pi/2, 0): sensor +X (optical axis) = body +Z,
+                        sensor +Y = body +Y, sensor +Z = body -X.
+-->
+<sdf version='1.9'>
+  <model name='x500_rescue'>
+    <self_collide>false</self_collide>
+    <include merge='true'>
+      <uri>model://x500</uri>
+    </include>
+    <include merge='true'>
+      <uri>model://mono_cam</uri>
+      <pose>0 0 .10 0 1.5707 0</pose>
+      <name>mono_cam</name>
+    </include>
+    <joint name="CameraJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>camera_link</child>
+      <pose relative_to="base_link">0 0 0 0 1.5707 0</pose>
+    </joint>
+    <include merge='true'>
+      <uri>model://depth_cam_up</uri>
+      <pose>0 0 .39 0 -1.5707963 0</pose>
+      <name>depth_cam_up</name>
+    </include>
+    <joint name="DepthUpJoint" type="fixed">
+      <parent>base_link</parent>
+      <child>depth_up_link</child>
+    </joint>
+  </model>
+</sdf>
