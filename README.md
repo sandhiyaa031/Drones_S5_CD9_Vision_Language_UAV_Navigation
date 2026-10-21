@@ -376,7 +376,10 @@ The last two are **failures**, and we have included them on purpose. They show t
 ### Demo video
 
 
-https://github.com/sandhiyaa031/Drones_S5_CD9_Vision_Language_UAV_Navigation/blob/main/gazebosimulation.mp4
+
+https://github.com/user-attachments/assets/96d4486e-403c-4d0a-8bf7-301819e60199
+
+
 ---
 
 ## 11. Testing
