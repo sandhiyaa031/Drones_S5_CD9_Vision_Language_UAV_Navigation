@@ -374,9 +374,10 @@ The last two are **failures**, and we have included them on purpose. They show t
 | `20_demo_check_2026-10-06_survivor_candidate.jpg` | With the VLM turned off, the drone correctly stops at "candidate" and does not claim a confirmed survivor |
 
 ### Demo video
+## 🎥 Demo Video
 
-[https://github.com/user-attachments/assets/437d402a-7b3b-4a8a-8b44-ca0b5fdd62d4](https://github.com/sandhiyaa031/Drones_S5_CD9_Vision_Language_UAV_Navigation/blob/main/gazebo_simulation.mp4)
-
+<video src="https://github.com/user-attachments/assets/437d402a-7b3b-4a8a-8b44-ca0b5fdd62d4" controls width="100%">
+</video>
 ---
 
 ## 11. Testing
