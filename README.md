@@ -34,9 +34,22 @@
 10. [Results](#10-results)
 11. [Testing](#11-testing)
 12. [How to Build and Run](#12-how-to-build-and-run)
-13. [Current Limitations and Next Steps](#13-current-limitations-and-next-steps)
-14. [Base Paper](#14-base-paper)
-15. [License](#15-license)
+13. [Base Paper](#13-base-paper)
+14. [License](#14-license)
+
+**Part II — the complete system (current version)**
+
+15. [Control Logic, Dynamics and Controllability (main part)](#15-control-logic-dynamics-and-controllability-main-part)
+16. [Mission from One Sentence](#16-mission-from-one-sentence)
+17. [The Urban Earthquake-Collapse World](#17-the-urban-earthquake-collapse-world)
+18. [Search Planning, SLAM and Path Planning](#18-search-planning-slam-and-path-planning)
+19. [Survivor Confirmation with a Real VLM, and 3-D Localisation](#19-survivor-confirmation-with-a-real-vlm-and-3-d-localisation)
+20. [Second Simulator: MuJoCo](#20-second-simulator-mujoco)
+21. [Results of the Complete System](#21-results-of-the-complete-system)
+22. [Demo Commands (tested)](#22-demo-commands-tested)
+23. [Tests (current)](#23-tests-current)
+24. [Honest Limitations](#24-honest-limitations)
+25. [Metric Definitions](#25-metric-definitions)
 
 ---
 
@@ -55,6 +68,8 @@ But a drone inside a collapsed building faces three big problems:
 | **Finding people** | The drone must decide whether something it sees is a person | A downward camera finds possible survivors, and an AI model that understands images and language (a **Vision-Language Model**) double-checks them |
 
 Everything runs in a **computer simulation**, so we can test safely without crashing a real drone.
+
+> **Update:** the project now runs a full rescue mission from one English sentence in **two simulators** (Gazebo + PX4 + ROS 2, and MuJoCo), with SLAM, search planning, a real Vision-Language Model and falling-debris avoidance. See **Part II** (§15 onwards). Note that in the final system PX4 still uses simulated GNSS for its own position; see the clarification at the start of Part II.
 
 ---
 
@@ -139,6 +154,8 @@ Done
 ```
 
 If anything goes wrong at any step (for example a timeout), it switches to a **failsafe** state.
+
+> **Update:** in the final missions the drone takes off to 6 m and the `SEARCH` state follows goals from the search planner; the full state machine, guards, setpoint arbitration and the controllability analysis are in **§15**.
 
 Supporting files:
 
@@ -386,7 +403,9 @@ https://github.com/user-attachments/assets/2fb6d563-4f80-4912-8aa7-344652a465b7
 
 ## 11. Testing
 
-The folder `src/uav_autonomy/test/` contains **318 automatic tests** that check each part of the code works as expected, plus code-style checks.
+> **Update:** this was the first version. The current count is **557 tests (552 pass, 5 skipped)**, see §23.
+
+The folder `src/uav_autonomy/test/` contained **318 automatic tests** that check each part of the code works as expected, plus code-style checks.
 
 | What is tested | Number of tests |
 |---|---|
@@ -480,439 +499,611 @@ This project is released under the MIT License. See [`LICENSE`](LICENSE).
 
 </div>
 
+---
+
+# Part II — The Complete System (current version)
+
+Sections 1–14 above describe how the project started: one collapsed building, the debris
+chain and the survivor pipeline. Since then the project has grown into a complete rescue
+mission that runs in **two separate simulators**. The sections below cover everything that
+was missing above. **Section 15 (control logic and controllability) is the core of the
+project.**
+
+| Area | Where it is described |
+|---|---|
+| **Control logic, dynamics and controllability (main part)** | §15 |
+| Mission from one English sentence, mission manager, preflight gate | §16 |
+| The urban earthquake-collapse world | §17 |
+| Search planning, SLAM, path planning | §18 |
+| Survivor confirmation with a real VLM, 3D localisation | §19 |
+| The second simulator (MuJoCo) | §20 |
+| Results of the complete system | §21 |
+| Exact demo commands | §22 |
+| Tests | §23 |
+| Honest limitations | §24 |
+| Metric definitions | §25 |
+
+> **Clarification of the claims in §1–§2.** In the final system PX4 estimates the drone's
+> own position with its EKF2 using simulated IMU, barometer, magnetometer **and GNSS**.
+> **SLAM** (§18) builds the obstacle map, and the route planner uses it to fly around rubble
+> and walls. So the system *navigates* by a map it builds itself, but it is **not**
+> GPS-denied *flight*. Section 24 lists this as a limitation, and replacing GNSS in the
+> estimator is the main future step. Simulator ground truth is never used by any running
+> node. It is used only afterwards, to score the results.
+
+The full mission, as it runs in Gazebo:
+
+```mermaid
+flowchart LR
+    S["English sentence"] --> I["Interpreter<br/>(rules or LLM) + checks"]
+    I --> MM["Mission manager<br/>preflight gate"]
+    MM -->|START| FC["flight_controller<br/>(only commander of PX4)"]
+    SP["Search planner<br/>lanes + inspections"] -->|goals| NAV["Navigator<br/>A* on SLAM map"]
+    NAV -->|validated goal| FC
+    LID["2-D lidar"] --> SLAM["slam_toolbox<br/>2-D SLAM"] --> NAV
+    DC["Down camera"] --> SPERC["Survivor detector<br/>+ temporal confirmation"]
+    SPERC -->|crop, async| VLM["Gemma 3 4B VLM<br/>(Ollama)"]
+    VLM --> SPERC
+    SPERC --> LOC["Survivor EKF<br/>3-D localisation"] --> MM
+    UC["Up depth camera"] --> DEB["Debris: detect → track →<br/>predict → risk → avoid"] -->|proposal| FC
+    FC -->|position setpoints 20 Hz| PX4["PX4 SITL<br/>cascaded PID loops"]
+    PX4 --> GZ["Gazebo x500"]
+    MM --> REP["mission_report.json"]
+```
 
 ---
 
-## Additional Technical Documentation
+## 15. Control Logic, Dynamics and Controllability (main part)
 
-The following sections supplement the existing project description with further details about the control architecture, mathematical formulation, ROS 2 interfaces, evaluation methodology, reproducibility and limitations. They are intended to document the system without replacing the existing sections above.
+The drone is controlled by **four nested layers**. Each layer only gives targets to the
+layer below it, and each layer checks the feedback from the layer below before it goes on.
 
-## A. Main Control Logic and Mathematical Formulation
+| Layer | Runs in | Rate | Input → output | Feedback it uses |
+|---|---|---|---|---|
+| 4. Mission supervision | `mission_manager_node.py` + `mission_logic.py` | 2 Hz | mission file → START / RETURN_HOME / LAND_NOW | flight status, perception health, battery, VLM availability |
+| 3. Supervisory flight controller | `flight_controller.py` (state machine) | 20 Hz tick, 20 Hz setpoints | goals and avoidance proposals → **one position setpoint** | PX4 position, arming, nav state, landed flag, telemetry age |
+| 2. Position / velocity loops | PX4 `mc_pos_control` | PX4 internal (estimator rate) | position setpoint → thrust vector + attitude setpoint | EKF2 position and velocity |
+| 1. Attitude / rate loops, mixer | PX4 `mc_att_control`, `mc_rate_control`, control allocator | PX4 internal (gyro rate) | attitude setpoint → 4 motor commands | gyro, attitude estimate |
 
-### A.1 Hierarchical control architecture
+In the **MuJoCo** simulator, layers 1 and 2 are the project's own cascaded controller
+(`simulation/mujoco/controllers/quadrotor.py`), and layers 3–4 are a Python mission loop
+(`simulation/mujoco/scripts/run_mission.py`). The model and gains of both are given below.
 
-The system separates mission-level decisions from flight execution. The mission manager supervises the rescue task, perception modules process camera data, planning modules generate search or avoidance proposals, and the flight controller selects the target that is sent to PX4.
+### 15.1 The vehicle (x500) and its equations of motion
 
-The intended data flow is:
+Parameters, taken from the PX4 `x500` model and used identically in MuJoCo:
+
+| Quantity | Value |
+|---|---|
+| Mass m | 2.064 kg |
+| Inertia (Ixx, Iyy, Izz) | 0.02167, 0.02167, 0.040 kg·m² |
+| Rotor thrust constant k_f | 8.54858 × 10⁻⁶ N/(rad/s)², ω_max = 1000 rad/s |
+| Max thrust per rotor | 8.55 N (4 rotors: 34.2 N) |
+| Weight | 20.25 N → hover thrust 5.06 N per rotor (59 % of max) |
+| Thrust-to-weight ratio | **1.69** |
+| Motor time constant | 0.0125 s spin-up, 0.025 s spin-down |
+| Reaction-torque coefficient k_m | 0.016 m |
+| Rotor positions (x, y) | (±0.13, ±0.22 / ±0.20) m |
+
+Rigid-body dynamics (world frame z-up; R is the body-to-world rotation, T is the total thrust
+along body z, and **τ** is the body torque):
+
+$$
+m\,\ddot{\mathbf p} = -m g\,\mathbf e_z + T\,\mathbf R\,\mathbf e_z, \qquad
+\mathbf J\,\dot{\boldsymbol\omega} = \boldsymbol\tau - \boldsymbol\omega \times \mathbf J\boldsymbol\omega, \qquad
+\dot{\mathbf R} = \mathbf R\,[\boldsymbol\omega]_\times
+$$
+
+**Control allocation.** The four motor thrusts f₁…f₄ map to the collective thrust and the
+three torques through a 4 × 4 matrix (from the rotor geometry above):
+
+$$
+\begin{bmatrix}T\\ \tau_x\\ \tau_y\\ \tau_z\end{bmatrix}
+=\underbrace{\begin{bmatrix}1&1&1&1\\ 0.22&-0.22&0.20&-0.20\\ -0.13&-0.13&0.13&0.13\\ -k_m&k_m&k_m&-k_m\end{bmatrix}}_{\mathbf A_{alloc}}
+\begin{bmatrix}f_1\\ f_2\\ f_3\\ f_4\end{bmatrix}
+$$
+
+rank(A_alloc) = 4 and its condition number is 62.6. The matrix is invertible, so **any
+demanded (T, τ) within the motor limits maps to exactly one set of motor thrusts**. The
+large condition number comes from the small yaw arm (k_m = 0.016 m). It means that yaw is
+the weakest axis, which is why the controllers limit the yaw rate (1 rad/s in MuJoCo).
+
+### 15.2 Linearisation about hover
+
+State **x** = [x, y, z, vx, vy, vz, φ, θ, ψ, p, q, r]ᵀ (12 states), input
+**u** = [ΔT, τx, τy, τz]ᵀ. For small angles around hover (T = mg):
+
+$$
+\dot x = v_x,\ \dot y = v_y,\ \dot z = v_z,\quad
+\dot v_x = g\,\theta,\ \dot v_y = -g\,\phi,\ \dot v_z = \Delta T/m,\quad
+\dot\phi = p,\ \dot\theta = q,\ \dot\psi = r,\quad
+\dot p = \tau_x/J_{xx},\ \dot q = \tau_y/J_{yy},\ \dot r = \tau_z/J_{zz}
+$$
+
+i.e. $\dot{\mathbf x} = \mathbf A\mathbf x + \mathbf B\mathbf u$. The horizontal axes form a
+**4th-order chain**: torque → angular rate → angle → acceleration (g·θ) → velocity →
+position. The vertical axis and yaw are each 2nd-order chains.
+
+### 15.3 Controllability: result
+
+A linear system is controllable when every state can be driven to any value in finite
+time. **Kalman test:** rank 𝒞 = n with 𝒞 = [B AB A²B … Aⁿ⁻¹B]. **PBH test**
+(Popov–Belevitch–Hautus): rank [λI − A, B] = n for every eigenvalue λ of A. The PBH test
+is used as the decisive test because it stays numerically exact when 𝒞 is badly scaled.
+
+Computed by `scripts/analysis/controllability.py` (output in `results/analysis/controllability.json`):
+
+| Model | States | Inputs | Kalman rank (numeric) | PBH rank | Result |
+|---|---|---|---|---|---|
+| Rigid body, u = [ΔT, τx, τy, τz] | 12 | 4 | 12 | 12 | **controllable** |
+| Rigid body, u = 4 motor thrusts (through A_alloc) | 12 | 4 | 12 | 12 | **controllable** |
+| Rigid body + first-order motor lag, u = 4 motor commands | 16 | 4 | 4 * | 16 | **controllable** |
+| Horizontal chain [x, vx, θ, q], u = τy | 4 | 1 | 4 | 4 | **controllable** |
+| Counter-example: thrust only (no torques) | 12 | 1 | 2 | 9 | **not controllable** |
+
+\* The 16-state Kalman matrix contains powers of the motor pole (80 s⁻¹)¹⁵ ≈ 3.5 × 10²⁸.
+These swamp the other columns, so the numerical rank is understated. The PBH test shows full
+rank, which is expected: an invertible first-order lag in front of a controllable system
+stays controllable.
+
+**What this means.**
+- With four independent motors (A_alloc invertible), the linearised x500 can reach any
+  position, velocity, attitude and rate. This is why the flight software can treat
+  horizontal position as a commandable quantity even though the drone has **no direct
+  horizontal actuator**. Horizontal motion is reached **through attitude**, which is why it
+  is slower (§15.5).
+- The counter-example shows why the torques are essential. Thrust alone only moves z and vz
+  (Kalman rank 2): a quadrotor that could only throttle up and down could never move sideways.
+- Controllability is a property of the **linear model at hover**. It does **not** prove
+  stability (§15.5 does that for the closed loop). It also does not account for limits:
+  the 1.69 thrust-to-weight ratio, the tilt limit (45° in PX4, 32° in MuJoCo) and motor
+  saturation bound how *fast* states can be reached.
+
+### 15.4 Inner loops actually used
+
+**PX4 (Gazebo runs; default gains, unchanged):**
+
+| Loop | Law | Gains (PX4 parameter = value) |
+|---|---|---|
+| Position | $\mathbf v_{sp} = K_p(\mathbf p_{sp} - \mathbf p)$ | MPC_XY_P = 0.95, MPC_Z_P = 1.0 |
+| Velocity | PID → acceleration / thrust vector | MPC_XY_VEL_P/I/D_ACC = 1.8 / 0.4 / 0.2; MPC_Z_VEL_P/I_ACC = 4.0 / 2.0 |
+| Attitude | P on attitude error (quaternion) | MC_ROLL_P = MC_PITCH_P = 4.0, MC_YAW_P = 2.8 |
+| Body rate | PID | MC_ROLLRATE_P/I/D = 0.15 / 0.2 / 0.003, MC_YAWRATE_P = 0.2 |
+| Limits | | MPC_XY_VEL_MAX 12 m/s, up 3 m/s, down 1.5 m/s, MPC_TILTMAX_AIR 45°, hover throttle 0.6 (x500) |
+
+
+### 15.5 Closed-loop stability (linearised)
+
+Closing the loop around the hover model with the MuJoCo gains, and using the response model
+that the project fitted to real PX4 flight logs (`debris_avoidance.AvoidanceParams`:
+τ = 0.493 s, kp = 0.827, kv = 3.203), gives these eigenvalues. All of them have negative
+real parts, so the loops are **asymptotically stable**:
+
+| Loop | Eigenvalues (s⁻¹) | Slowest / least damped mode | 1 m step: rise 10–90 % | Overshoot | 2 % settling |
+|---|---|---|---|---|---|
+| MuJoCo, horizontal (5 states incl. integrator) | −11.50; −2.97 ± 2.81j; −2.40; −0.155 | ζ = 0.73 (ωn 4.1 rad/s) | 1.04 s | 0 % | 2.06 s |
+| MuJoCo, vertical (with motor lag) | −76.7; −1.56 ± 1.12j; −0.155 | ζ = 0.81 (ωn 1.9 rad/s) | 1.33 s | 0.8 % | 2.07 s |
+| PX4, horizontal (fitted from logs) | −0.98; −0.52 ± 2.28j | ζ = 0.22 (ωn 2.3 rad/s) | 1.10 s | 2.7 % | 5.07 s |
+
+![Step response](results/analysis/step_response.png)
+
+The pole at −0.155 is the slow velocity integrator. It removes steady offsets, such as rotor
+drag in steady flight, without affecting the fast response. The PX4 fit has a lightly damped
+mode. That model was fitted for **1 s-ahead prediction** in the avoidance planner (largest
+error 0.25 m over 133 start states), not as a gain design.
+
+### 15.6 Layer 3: the supervisory flight controller (`flight_controller.py`)
+
+The project's flight controller is a **supervisory, setpoint-based controller**. It does not
+implement PID itself. It closes the loop *logically*: every state transition tests PX4
+feedback. It is the **only** node that publishes to PX4 (`/fmu/in/trajectory_setpoint`,
+`/fmu/in/offboard_control_mode` with position = true, `/fmu/in/vehicle_command`).
 
 ```mermaid
-flowchart TD
-    A["Mission instruction"] --> B["Mission manager"]
-    B --> C["Search planner"]
-    D["Downward camera"] --> E["Survivor perception and VLM"]
-    E --> F["Survivor localisation"]
-    G["Upward depth camera"] --> H["Debris detection"]
-    H --> I["Debris tracking"]
-    I --> J["Trajectory prediction"]
-    J --> K["Risk assessment"]
-    K --> L["Avoidance planner"]
-    C --> M["Flight controller"]
-    L --> M
-    F --> B
-    M --> N["PX4 Offboard interface"]
-    N --> O["UAV in Gazebo"]
-    O --> D
-    O --> G
+stateDiagram-v2
+    [*] --> WAIT_FOR_DATA
+    WAIT_FOR_DATA --> PRESTREAM: position + status fresh (and START if mission-managed)
+    PRESTREAM --> REQUEST_OFFBOARD: ≥1.5 s and ≥30 setpoints streamed
+    REQUEST_OFFBOARD --> WAIT_PREFLIGHT: PX4 nav_state = OFFBOARD (command retried every 2 s, ≤4 tries, 15 s timeout)
+    WAIT_PREFLIGHT --> REQUEST_ARM: PX4 preflight checks pass (30 s timeout)
+    WAIT_PREFLIGHT --> REQUEST_OFFBOARD: Offboard lost
+    REQUEST_ARM --> TAKEOFF: arming_state = ARMED (15 s timeout)
+    TAKEOFF --> SEARCH: |alt − target| ≤ 0.25 m (search mission)
+    TAKEOFF --> WAYPOINT_1: waypoint mission
+    TAKEOFF --> HOLD: hover test
+    WAYPOINT_1 --> WAYPOINT_2: within 0.5 m
+    WAYPOINT_2 --> RETURN_HOME
+    SEARCH --> RETURN_HOME: area covered / budget / planner lost 5 s / RETURN_HOME cmd
+    HOLD --> REQUEST_LAND: 30 s hold within 0.35 m
+    RETURN_HOME --> REQUEST_LAND: within 0.5 m of home
+    REQUEST_LAND --> LANDING: PX4 accepts NAV_LAND
+    LANDING --> COMPLETE: landed AND disarmed
+    WAIT_FOR_DATA --> FAILSAFE: any timeout / guard
+    TAKEOFF --> FAILSAFE: disarmed, left Offboard, 30 s timeout
+    SEARCH --> FAILSAFE: stale telemetry, safety monitor
+    FAILSAFE --> [*]: requests NAV_LAND repeatedly
+    COMPLETE --> [*]
 ```
 
-This diagram represents the intended system-level data flow. The exact runtime connections should be checked against the launch files and ROS 2 topic graph.
+**Guards and timeouts (exact values in the code):**
 
-The control architecture follows three principles:
-
-1. **Single command authority:** the flight controller is the application component responsible for publishing flight setpoints to PX4.
-2. **Proposal-based planning:** perception and planning components provide detections, estimates or proposed targets rather than independently commanding the aircraft.
-3. **Feedback-based execution:** the controller uses vehicle telemetry and mission status to monitor progress and determine subsequent actions.
-
-### A.2 Position error
-
-Let the estimated UAV position be
-
-\[
-\mathbf{p} =
-\begin{bmatrix}
-x & y & z
-\end{bmatrix}^{T}
-\]
-
-and the selected target position be
-
-\[
-\mathbf{p}^{*} =
-\begin{bmatrix}
-x^{*} & y^{*} & z^{*}
-\end{bmatrix}^{T}.
-\]
-
-The position error is
-
-\[
-\mathbf{e}_{p} = \mathbf{p}^{*} - \mathbf{p}.
-\]
-
-The vector describes the displacement from the estimated current position to the target. Its horizontal component is
-
-\[
-\mathbf{e}_{xy} =
-\begin{bmatrix}
-x^{*}-x\\
-y^{*}-y
-\end{bmatrix},
-\]
-
-and its magnitude is
-
-\[
-d_{xy} = \|\mathbf{e}_{xy}\|_2
-= \sqrt{(x^{*}-x)^2+(y^{*}-y)^2}.
-\]
-
-These expressions define position error mathematically. The coordinate frame and sign convention must be stated consistently with the implementation. PX4 commonly uses NED conventions for local position setpoints, whereas ROS visualisation tools commonly use ENU; any conversion must be verified in the state bridge and controller.
-
-### A.3 PX4 setpoint tracking
-
-The ROS 2 application publishes position setpoints through the PX4 interface. PX4's internal control loops then work to track the commanded position and generate the corresponding lower-level flight commands.
-
-A simplified horizontal proportional relationship is
-
-\[
-\mathbf{v}_{xy,\mathrm{cmd}}
-\approx K_{p,xy}\mathbf{e}_{xy}.
-\]
-
-Here, \(K_{p,xy}\) represents the relevant horizontal position-control gain. This equation is a simplified description of position-control behaviour, not a claim that the application implements the PX4 internal control loop. Actual behaviour depends on PX4's configured gains, limits, estimator state and controller implementation.
-
-### A.4 Mission and avoidance target selection
-
-Let \(\mathbf{p}_{m}\) be the mission target and \(\mathbf{p}_{a}\) be a valid avoidance target. The target-selection rule can be represented as
-
-\[
-\mathbf{p}_{\mathrm{cmd}} =
-\begin{cases}
-\mathbf{p}_{a}, & \text{if avoidance is active and valid},\\
-\mathbf{p}_{m}, & \text{otherwise}.
-\end{cases}
-\]
-
-The avoidance planner proposes a manoeuvre when predicted debris motion creates a risk. The flight controller checks the proposal according to its configured validation and freshness rules before using it. If an avoidance proposal becomes invalid or stale, the implemented timeout logic determines what happens next. Resuming the mission target should not be interpreted as a guarantee that the environment is safe.
-
-### A.5 Setpoint displacement limiting
-
-A controller may constrain the effective displacement toward a target so that a distant target does not result in an excessively large step. A general bounded-displacement expression is
-
-\[
-\mathbf{e}_{xy,\mathrm{lim}} =
-\begin{cases}
-\mathbf{e}_{xy}, & \|\mathbf{e}_{xy}\|_2 \leq d_{\max},\\[4pt]
-\dfrac{d_{\max}}{\|\mathbf{e}_{xy}\|_2}\mathbf{e}_{xy},
-& \|\mathbf{e}_{xy}\|_2 > d_{\max}.
-\end{cases}
-\]
-
-Here, \(d_{\max}\) is a configured displacement bound. This is a general mathematical formulation; retain it as a description of the implementation only if it matches the actual `limit_setpoint(...)` logic and its parameters in `flight_controller.py`.
-
-### A.6 Flight state machine
-
-The flight controller uses explicit states to organise the flight lifecycle. The state names documented in the implementation include:
-
-| State | Purpose |
+| Item | Value |
 |---|---|
-| `STATE_WAIT_FOR_DATA` | Wait for required telemetry or input data. |
-| `STATE_PRESTREAM` | Publish setpoints before requesting Offboard mode. |
-| `STATE_REQUEST_OFFBOARD` | Request PX4 Offboard mode. |
-| `STATE_REQUEST_ARM` | Request vehicle arming. |
-| `STATE_TAKEOFF` | Track the takeoff target. |
-| `STATE_SEARCH` | Execute the search mission. |
-| `STATE_RETURN_HOME` | Return toward the configured home target. |
-| `STATE_REQUEST_LAND` | Request landing. |
-| `STATE_LANDING` | Monitor the landing sequence. |
-| `STATE_COMPLETE` | Mark the mission as complete. |
-| `STATE_FAILSAFE` | Handle a detected failure using the configured failure logic. |
+| Control tick / setpoint rate | 0.05 s / 20 Hz |
+| Pre-stream before Offboard | 1.5 s |
+| Command retry / attempts | 2.0 s / 4 |
+| Telemetry freshness (position, status) | 1.0 s (urban runs: status 3.0 s; CPU-VLM demo: status 8.0 s, position 3.0 s — parameters `status_timeout_s`, `position_timeout_s`) |
+| Mode / preflight / arm timeouts | 15 / 30 / 15 s |
+| Takeoff | target 3 m (6 m in the urban missions), tolerance 0.25 m, timeout 30 s |
+| Waypoint arrival | 0.5 m radius, optional arrival speed limit, timeout 45 s |
+| Landing | NAV_LAND accepted → wait for landed + disarmed, timeout 45 s |
+| In every airborne state | if PX4 reports disarmed or leaves Offboard → FAILSAFE |
 
-Transitions depend on the controller's state, telemetry, acknowledgements, mission progress, timeouts and safety checks. The exact transition conditions should be taken from the current source code when preparing a formal state-transition diagram.
+**Setpoint arbitration.** Each tick the controller selects exactly one target:
 
-A failsafe request is not proof that a safe landing will always occur. The outcome depends on which components remain operational, PX4's current state, the available telemetry and the configured autopilot failsafes.
+$$
+\mathbf p_{cmd} =
+\begin{cases}
+\mathbf p_{avoid}, & \text{avoidance proposal active and accepted by } \texttt{validate\_command}\\
+\mathrm{limit}(\mathbf p, \mathbf p_{mission}, v_{lim}), & \text{otherwise}
+\end{cases}
+$$
 
-### A.7 Supervisory safety logic
+An avoidance proposal is **accepted only if** it is younger than 0.5 s, finite, at most
+6 m from the vehicle, between 1.5 m and 15 m altitude, and the flight state allows
+avoidance. Otherwise it is refused and counted. When it ends, the mission step stays
+*paused* (its timers frozen) until the vehicle is back within 0.5 m horizontally and 0.35 m
+vertically of the mission setpoint.
 
-The supervisory layer can monitor conditions such as:
+**Speed cap through the setpoint (`limit_setpoint`).** PX4's position loop commands
+v = K_p·e with K_p = MPC_XY_P = 0.95. So a speed limit is enforced *without touching PX4* by
+never placing the setpoint further than v_lim / K_p ahead of the vehicle:
 
-- Missing or stale vehicle telemetry.
-- PX4 arming and Offboard status.
-- Takeoff, waypoint and landing timeouts.
-- Invalid or unavailable planning targets.
-- Stale avoidance proposals.
-- Altitude and other configured safety limits.
-- Command acknowledgements and subsystem failures.
+$$
+\mathbf p_{cmd,xy} =
+\begin{cases}
+\mathbf p_{mission,xy}, & \lVert\mathbf e_{xy}\rVert \le v_{lim}/K_p\\[3pt]
+\mathbf p_{xy} + \dfrac{v_{lim}/K_p}{\lVert\mathbf e_{xy}\rVert}\,\mathbf e_{xy}, & \text{otherwise}
+\end{cases}
+\qquad \mathbf e_{xy} = \mathbf p_{mission,xy} - \mathbf p_{xy}
+$$
 
-When a configured condition is violated, the controller follows its failure-handling logic rather than continuing normal mission execution without checking the fault. The precise response is fault-specific and should be verified against the source code and fault-injection results.
+The cap is the minimum of the transit limit, the search speed (2.0 m/s, inspection
+1.5 m/s, never above 3.0 m/s) and any lower cap that the avoidance planner requests when
+perception degrades (never below 0.5 m/s).
 
-### A.8 Controllability: scope and distinction
+**Search goals** from the planner are accepted only if they are younger than 1.0 s and at
+most 25 m from home. If there is no valid goal for 5 s, or the 300 s search budget is used
+up, the controller begins the return.
 
-For a linear time-invariant model,
+### 15.7 Debris avoidance as a control problem
 
-\[
-\dot{\mathbf{x}} = A\mathbf{x}+B\mathbf{u},
-\]
+The avoidance planner (`debris_avoidance.py`) is a **sampling-based model-predictive
+controller**:
+1. Generate candidates: hold, 8 horizontal directions × {2.5 m, 4.0 m}, climb 2 m, descend 1 m.
+2. **Roll out** each candidate through the PX4 response model fitted from flight logs
+   (per axis: $\dot a = (\mathrm{clip}(k_v(\mathrm{clip}(k_p e, v_{max}) - v), a_{max}) - a)/\tau$,
+   with τ = 0.493 s, kp = 0.827, kv = 3.203, a_max = 11.08 m/s²).
+3. Reject the candidate if, at any sampled time, the separation from any predicted debris
+   path is less than safety radius + uncertainty margin + 0.25 m model error. Also reject it
+   if it leaves the altitude or speed limits or enters a structure.
+4. Choose the lowest cost among the feasible candidates:
+   $J = w_{risk}\,\text{risk} + w_{dist}\,\text{deviation} + w_{energy}\,\text{effort} + w_{smooth}\,\text{change} + w_{alt}\,\Delta h$.
 
-the controllability matrix is
+Its state machine is NORMAL_FLIGHT → PREPARE_AVOIDANCE → AVOIDING → CLEARING →
+RESUME_MISSION (plus DEFENSIVE and AVOIDANCE_FAILSAFE). If perception gets old, it caps the
+speed (DEGRADED or STALE). The result is only a **proposal**, which the flight controller
+validates (§15.6).
 
-\[
-\mathcal{C} =
-\begin{bmatrix}
-B & AB & A^2B & \cdots & A^{n-1}B
-\end{bmatrix}.
-\]
+### 15.8 Safety monitor and failsafe (`flight_safety.py`)
 
-The model is controllable if
+This runs on every PX4 position sample above 0.5 m altitude:
 
-\[
-\operatorname{rank}(\mathcal{C})=n,
-\]
+| Check | Trips when |
+|---|---|
+| Impact | ‖a‖ > 30 m/s² |
+| Position jump | ‖Δp − v̄Δt‖ > 0.5 + ½·30·Δt² m |
+| Velocity jump | ‖Δv‖ > 3.0 + 30·Δt m/s |
+| Speed envelope | v_xy > 6.5 m/s or \|v_z\| > 3.0 m/s |
+| Estimator | reset counter changes, or any non-finite value |
+| Altitude | excursion > 1.0 m in cruise states |
 
-where \(n\) is the number of state variables.
+Any violation latches **FAILSAFE**, which requests PX4 `NAV_LAND`. PX4's own failsafes stay
+active underneath. **Fault injection:** killing SLAM or the navigator 60 s into a mission led
+to a routed return and a landing. A stock waypoint route that hit a roof was caught by the
+monitor at 8.6 s, and the drone landed at 8.7 s.
 
-This is a standard mathematical criterion, not a result established merely by implementing the flight state machine or running a simulation. A claim of formal controllability for this UAV would require a defined dynamic model, explicit \(A\) and \(B\) matrices, and a rank analysis. The project should not claim that proof unless that analysis has actually been completed.
+### 15.9 Measured control performance
 
-## B. ROS 2 Components and Interface Documentation
+| Test | Result |
+|---|---|
+| Gazebo + PX4, 5 hover flights | altitude RMSE 0.070–0.096 m, drift 0.042–0.059 m, landing offset 0.015–0.059 m |
+| PX4 response-model fit (avoidance planner) | largest 1 s-ahead error 0.25 m over 133 start states |
+| MuJoCo, own cascade, hover | position RMSE **9.4 mm** |
+| MuJoCo, square at 3 m/s | cross-track RMSE 0.53 m, max 1.37 m |
+| MuJoCo, routed flight around blocked street | 111 m detour, 0 collisions, closest lidar range 1.69 m |
+| **PX4 in the MuJoCo loop** (unchanged PX4 + unchanged `flight_controller.py`, MAVLink HIL) | hover hold RMSE **4.4 cm**; 3 waypoints reached to 0.4 / 17.6 / 0.4 cm; landing offset 0.35 m; 18 of 19 trials complete (1 lockstep hang) |
 
-The following table summarises component responsibilities described in this README. It is not a substitute for the exact topic names and message types in the code.
+---
 
-| Component | Inputs | Outputs or responsibility |
+## 16. Mission from One Sentence
+
+**Files:** `mission_language.py`, `scripts/mission/interpret_mission.py`,
+`mission_logic.py`, `mission_manager_node.py`, `missions/places_disaster.json`
+
+```
+"Search the collapsed apartment block for survivors, only report confirmed ones, and return to base."
+   ▼ text screen       refuses: empty, "ignore/disable safety…", feet/miles/hours
+   ▼ interpreter       keyword rules (default) or a language model → 9 fixed fields, NO coordinates
+   ▼ cross-checks      numbers must appear in the text; place must be named; safety flags OR'ed
+   ▼ limits            altitude, time, area; out of range → refuse (nothing is clamped)
+   ▼ read-back         operator confirms
+   ▼ mission manager   preflight gate → START → search → return → land → report
+```
+
+- The interpreter **cannot output coordinates**. A place is always one of the named areas
+  in the catalogue (for example `collapsed_block` = north 44–72 m, east 14–27 m, at 6 m
+  altitude).
+- "Only report confirmed ones" sets `require_vlm`, so the mission **will not take off**
+  without a working VLM.
+- **Score** on a fixed instruction set (20 development + 30 held-out): rules 24/30 and
+  language model 23/30 correct on held-out, with **0 unsafe acceptances**.
+- **Preflight gate** (all checks must hold for 2 s): flight controller waiting, perception
+  streams younger than 2 s, planner alive, VLM available (if required), debris avoidance
+  alive (if required), battery ≥ return level + 10 %.
+- **During flight** the manager ends the search on: area covered, time budget, battery,
+  perception lost, debris protection lost, or a confirmed survivor (if the policy says so).
+  Then it writes `mission_report.json`.
+
+---
+
+## 17. The Urban Earthquake-Collapse World
+
+**Files:** `scripts/disaster/make_disaster_zone.py` (procedural generator),
+`scripts/disaster/validate_disaster.py`, `src/uav_autonomy/worlds/disaster/`
+
+- A dark urban disaster zone: damaged multi-storey concrete blocks with exposed floors, a
+  collapsed block with a rubble field, a U-shaped courtyard, and a street blocked by rubble
+  that forces a detour. It has about 39 000 triangles and procedural concrete, rubble and
+  asphalt textures.
+- 7 scenarios, all from one generator:
+
+| Scenario | Content |
+|---|---|
+| `urban_A` | no survivors (reconnaissance) |
+| `urban_B` | one survivor on the collapse rubble (**main demo**) |
+| `urban_B2` | one survivor in the courtyard |
+| `urban_C` | three survivors and five look-alikes |
+| `urban_D` | two survivors partly under leaning slabs, one look-alike |
+| `urban_E` | one survivor inside the collapsed block, under a leaning slab |
+| `urban_F` | no survivors, five look-alikes (false-positive control) |
+
+- Look-alikes are an orange barrel, a cone, a tarp, and a crate with a ball. They are made
+  to fool a colour detector, so they test the VLM.
+- The validator checks heights (≤ 15 m), rubble (≤ 4.5 m), that the 6 m lidar slice hits
+  363 structures, that every route the mission needs exists, and that the blocked street
+  really forces a detour.
+- **Search areas are exterior only.** A 2-D lidar slice cannot see slabs overhead. Two
+  early flights into a collapsed interior ended in impacts, so interiors are out of scope.
+
+---
+
+## 18. Search Planning, SLAM and Path Planning
+
+**Files:** `search_planning.py`, `search_planner_node.py`, `slam_bridge_node.py`,
+`navigation.py`, `navigator_node.py`, `config/slam_toolbox_urban.yaml`
+
+**Coverage search.** The camera footprint at height h has half-extents
+(ℓ_f, ℓ_r) = m·h·(H/2f_y, W/2f_x), with usable margin m = 0.8. Lanes run along the long
+side, with spacing 2ℓ⊥(1 − ω) at 50 % overlap, so every ground point is seen twice, once
+from above and once obliquely. A 0.5 m grid records which cells the real footprint (from
+the real pose) has covered.
+
+**Inspection (approach the survivor).** When a candidate has been seen at least 15 times,
+the planner leaves the lanes and flies **2 viewpoints, 90° apart, 2–4 m from the
+candidate, about 35° off nadir**, at 1.5 m/s. These oblique, close views:
+- give the VLM a clear, complete side view (it rejects straight-down crops), and
+- give the localiser a triangulation baseline.
+
+While a VLM answer is pending, the planner **holds the drone at the viewpoint**
+(`inspect_timeout_s`). Then it continues the lanes.
+
+**SLAM.** `slam_toolbox` builds a 2-D pose-graph map with scan matching and loop closure,
+from a 720-ray planar lidar at 10 Hz. `slam_bridge` levels each scan by the attitude and
+keeps only returns within the 6 m flight plane.
+
+**Path planning.** A* runs on a 0.5 m grid built from the SLAM map. Obstacles are inflated
+by 1.75 m, there is an extra cost within 4 m of an obstacle, and unknown cells are passable
+at an extra cost of 0.6. A 3.5 m look-ahead point is sent as the goal, the route is
+replanned every 1 s, and the speed drops to 1.2 m/s within 3 m of obstacles. The **return
+home is routed on the SLAM map at search altitude**, and the climb happens only near home.
+This is because a straight climb-and-fly-back under slabs caused an impact during
+development.
+
+**SLAM accuracy (against ground truth, offline):** 0.08–0.57 m RMSE in the village world
+(17 flights) and 0.5–2.8 m in the urban world, where repetitive facades confuse scan
+matching. Stricter settings reduced one 12.5 m drift to about 1.1 m.
+
+---
+
+## 19. Survivor Confirmation with a Real VLM, and 3-D Localisation
+
+**Files:** `survivor_detection.py`, `survivor_confirmation.py`, `vlm_client.py`,
+`survivor_perception_node.py`, `survivor_localization.py`
+
+1. **Detect.** An HSV and shape detector finds candidates on the downward camera image
+   (score 0–1).
+2. **Confirm over time.** A candidate must appear in 5 of 8 frames.
+3. **VLM (Gemma 3 4B via Ollama).** A padded crop is sent **asynchronously** in a worker
+   thread, so flight control never waits for it. The question is asked in two steps:
+   neutral description first, then "is this a person?". Requests are made only **while
+   inspecting** (oblique, complete crops), and at most 3 answers are taken per track.
+4. **Decision.**
+
+| Situation | Reported as |
+|---|---|
+| VLM answers *confirm* with confidence ≥ 0.6 | `SURVIVOR_CONFIRMED` |
+| VLM rejects, weak detector cues | `REJECTED_BY_VLM` |
+| VLM rejects, strong detector cues (≥ 0.55) | `UNCERTAIN` |
+| VLM unavailable, timed out or not asked | `UNVERIFIED_CANDIDATE`, **never confirmed** |
+
+5. **Localise.** An extended Kalman filter estimates each survivor as a static 3-D point.
+   The measurement is the pixel position (u, v) = project(p), with a 2 × 3 Jacobian and an
+   innovation gate. The first ray is intersected with a plane at an assumed height. Once the
+   drone moves, the rays from different viewpoints triangulate the point and the assumption
+   stops mattering. The pose comes from PX4's estimator; ground truth is never used.
+
+**On this laptop the VLM runs on the CPU** (the NVIDIA driver is not loaded on the current
+kernel). One answer takes **75–130 s**, which is why the planner holds at the viewpoint.
+The 4B model is noisy: in one run it called the survivor a "toy dart" and a "Lego brick"
+before confirming, and in another it never confirmed (the survivor was then reported
+`UNVERIFIED`, located 0.1 m off). It correctly rejected the orange tarp look-alike three
+times ("orange block", "orange sign", "orange prism"). The system reports exactly what the
+VLM answered and never fakes a confirmation.
+
+---
+
+## 20. Second Simulator: MuJoCo
+
+**Folder:** `simulation/mujoco/` (isolated Python venv: only `mujoco` is installed; no
+ROS, Gazebo or PX4 needed)
+
+| | Gazebo + PX4 + ROS 2 | MuJoCo |
 |---|---|---|
-| Flight controller | PX4 telemetry, mission targets, avoidance proposals | Publishes flight setpoints and issues configured vehicle commands |
-| State bridge | PX4 vehicle-state data | Converts or exposes vehicle state for ROS 2 consumers |
-| Debris detector | Upward-facing depth images | Produces debris detections |
-| Debris tracker | Detections over time | Associates detections and estimates object motion |
-| Debris predictor | Tracked-object state | Estimates future debris trajectories |
-| Debris risk assessment | Predicted trajectories and UAV state | Classifies the estimated risk |
-| Debris avoidance planner | Risk estimates and UAV state | Proposes an avoidance target |
-| Survivor perception | Downward camera images | Produces candidates and VLM assessment |
-| Survivor localisation | Observations and camera/vehicle geometry | Estimates survivor position |
-| Mission manager | Mission objective and subsystem status | Supervises mission progression |
-| Search planner | Search objective and available navigation information | Generates search targets |
+| World | 7 urban scenarios (meshes, shadows) | same layout as boxes and cylinders, same textures (`make_mujoco_scene.py`) |
+| Vehicle | x500 in Gazebo | same x500 mass, inertia, rotor geometry, thrust and motor lag |
+| Autopilot | **PX4 SITL** (unchanged) | **project's cascaded controller** (§15.4); optional PX4-in-the-loop via MAVLink HIL for hover and waypoints |
+| State used by the controller | PX4 EKF2 | simulator state (labelled; no noise) |
+| Mapping | slam_toolbox **SLAM** | lidar occupancy grid with **known pose** (not SLAM) |
+| Survivor perception | same detector, EKF and **VLM** | same detector, EKF and **VLM**, on rendered frames |
+| Planning | same `search_planning.py`, A* `navigation.py` | same modules, called directly |
+| Falling debris | 6 boxes; depth → track → predict → risk → avoid | 3 boxes; **the same detector, tracker, risk and planner modules** fed by a rendered upward depth camera (`controllers/debris.py`) |
 
-### B.1 Exact interfaces to record
+The second simulator shows that the autonomy modules do not depend on Gazebo or ROS. Its
+results are reported separately and are never mixed with the Gazebo results.
 
-For a reproducible ROS 2 integration, document the following from the actual runtime and source code:
+---
 
-| Interface detail | What to record |
+## 21. Results of the Complete System
+
+**Gazebo + PX4 (urban world, Intel graphics, real-time factor about 0.5)**
+
+| Test | Result |
 |---|---|
-| Topic name | Exact ROS 2 topic, including namespace |
-| Message type | Exact ROS 2 or PX4 message type |
-| Publisher and subscriber | Node names at each end |
-| Coordinate frame | For example, the actual NED or ENU frame used |
-| Update rate | Measured or configured rate |
-| Timestamp | Clock source and timestamp convention |
-| Validity rules | Timeout, confidence or freshness checks |
-| Startup dependency | Which node or service must be available first |
+| Evaluation batch (exterior areas) | **10 / 10** flights complete, landed, all PX4-log checks passed, 0 failsafes |
+| Survivors in searched areas | **8 / 9** found, localisation error median **0.21 m**, max 1.07 m |
+| Falling debris (6 boxes) | 5 avoidance manoeuvres, **0 collisions**, closest box 1.34 m |
+| **VLM mission, final check** (`urban_B`, CPU VLM) | took off, searched, approached, VLM confirmed (after 3 rejects), survivor at 55.0 / 16.87 vs truth 55 / 17 (**0.13 m**), returned, landed |
+| VLM mission, earlier run | `SURVIVOR_CONFIRMED`, error 0.09 m |
+| Look-alike control (`urban_F`) | tarp **rejected by the VLM** 3 times; nothing confirmed |
+| Fault injection | SLAM killed at 60 s → return and land; navigator killed at 60 s → return and land |
+| SLAM error | 0.5–2.8 m RMSE (urban), 0.08–0.57 m (village) |
 
-Useful inspection commands include:
+**MuJoCo (standalone controller)**
+
+| Test | Result |
+|---|---|
+| Missions | 6 / 6 complete and landed, 0 collisions; survivors 6 / 6 (0.21–0.46 m) |
+| **VLM mission** (`urban_B`) | VLM confirmed ("blocky human figure", 0.95), survivor 0.21 m off, landed, 0 collisions |
+| VLM look-alike control (`urban_F`) | tarp rejected by the VLM |
+| **Falling debris** (3 boxes aimed at the drone) | 3 avoidance manoeuvres from the upward depth camera only, closest box 1.88 m, **0 collisions**, survivor found, landed |
+| Control | hover RMSE 9.4 mm; PX4-in-the-loop hover 4.4 cm |
+
+Evidence: every run writes `mission_report.json`, flight logs, ULog checks (Gazebo), VLM
+crops and decisions.
+
+---
+
+## 22. Demo Commands (tested)
+
+Run one simulator at a time.
+
+**Gazebo + PX4 + ROS 2 with the VLM** (about 12 minutes; the window follows the drone
+automatically):
 
 ```bash
-ros2 node list
-ros2 topic list
-ros2 topic info --verbose /fmu/out/vehicle_odometry
-ros2 topic info --verbose /fmu/in/trajectory_setpoint
-ros2 interface show px4_msgs/msg/TrajectorySetpoint
+cd ~/Desktop/drones/ros2_ws && source /opt/ros/jazzy/setup.bash && source install/setup.bash
+CONFIRM=yes VIZ=0 scripts/disaster/run_demo.sh "Search the collapsed apartment block for survivors, only report confirmed ones, and return to base." urban_B demo1
 ```
 
-Run these after the relevant ROS 2 nodes and bridges have started. A topic may exist without data being published, so check message flow as well as topic existence.
-
-## C. Coordinate Frames, Localisation and Mapping
-
-GPS-denied navigation requires a source of vehicle-state estimation that does not depend on GPS being available. The README should identify the actual estimator and inputs used in this implementation rather than implying that survivor triangulation also estimates the UAV's pose.
-
-Three separate concepts must be distinguished:
-
-1. **Vehicle localisation:** estimating the UAV's own position and orientation.
-2. **Mapping or SLAM:** constructing or updating a map while estimating the vehicle's pose, when a SLAM method is used.
-3. **Survivor localisation:** estimating a detected survivor's position from camera observations and geometric information.
-
-For triangulation, two or more viewing rays can be represented as
-
-\[
-\mathbf{r}_i(\lambda_i)
-= \mathbf{c}_i+\lambda_i\mathbf{d}_i,
-\]
-
-where \(\mathbf{c}_i\) is the camera centre, \(\mathbf{d}_i\) is a unit viewing direction and \(\lambda_i\) is distance along that ray. In ideal geometry, intersecting rays identify the target point. In real measurements, noisy rays generally do not intersect exactly, so a least-squares or other estimation method may be required.
-
-Triangulation requires camera calibration and consistent camera poses. If the camera poses come from simulator ground truth, the result must be described as ground-truth-assisted localisation rather than fully onboard GPS-denied localisation. If poses come from an onboard estimator, document that estimator and its error characteristics.
-
-### C.1 Coordinate-frame checklist
-
-Before describing the navigation system as fully GPS-denied, verify and document:
-
-- The source of UAV position and orientation.
-- The source of camera pose and camera calibration.
-- The coordinate frame of each mission and avoidance target.
-- The conversion between PX4 and ROS 2 coordinate conventions.
-- Whether simulator ground truth is used by any runtime control or localisation node.
-- Whether a map is built from sensor data or loaded from a preconfigured world.
-- How survivor positions are transformed into the reported map frame.
-
-## D. Reproducible Setup and Execution
-
-The existing build and run instructions describe key commands but do not provide a complete, verified startup sequence for every dependency. The following checklist can be used to make the setup reproducible without assuming unverified launch-file names.
-
-### D.1 Environment checklist
-
-- Ubuntu and ROS 2 Jazzy installed.
-- PX4 Autopilot and its compatible Gazebo simulation setup installed.
-- Gazebo world and UAV model available.
-- The ROS 2 workspace contains the required `px4_msgs` and `uav_interfaces` packages.
-- `ros_gz_bridge` and the Micro XRCE-DDS Agent are installed and configured.
-- Python dependencies are installed in the intended environment.
-- The VLM server and model are available when VLM-based confirmation is required.
-
-### D.2 Build the ROS 2 workspace
-
-Run from the workspace root, replacing the path with the actual workspace location:
+**MuJoCo with the VLM** (about 4 minutes; start the VLM server first if it is not running:
+`cd ~/ollama && OLLAMA_HOST=127.0.0.1:11434 ./bin/ollama serve`):
 
 ```bash
-source /opt/ros/jazzy/setup.bash
-cd <your_workspace>
-rosdep install --from-paths src --ignore-src -r -y
-colcon build --packages-up-to uav_autonomy
-source install/setup.bash
+cd ~/Desktop/drones/ros2_ws/simulation/mujoco && source .venv/bin/activate
+PYGLFW_LIBRARY_VARIANT=x11 MUJOCO_GL=glfw python3 scripts/run_mission.py "Search the collapsed apartment block for survivors, report survivor locations, and return to base." --scene urban_B --vlm gemma3-4b-cpu --gui --out ../../results/demo_mujoco_vlm
 ```
 
-The dependency installation command requires network access and correctly declared package dependencies. If the workspace uses a different dependency arrangement, follow its package manifests and existing setup documentation. A successful build does not itself prove that the full flight simulation works.
+**MuJoCo with falling debris:**
 
-### D.3 Startup order to document
+```bash
+PYGLFW_LIBRARY_VARIANT=x11 MUJOCO_GL=glfw python3 scripts/run_mission.py --scene urban_B --debris 3 --gui --out ../../results/demo_mujoco_debris
+```
 
-Record the exact commands that have been tested for each step:
+**Controllability analysis:**
 
-1. Start PX4 SITL and the compatible Gazebo world.
-2. Start the Micro XRCE-DDS Agent with the transport and port expected by PX4.
-3. Source the ROS 2 workspace in each terminal that needs the project packages.
-4. Start the required Gazebo-to-ROS bridges and verify camera topics.
-5. Start perception, localisation, planning and mission-management nodes required by the selected scenario.
-6. Start the flight controller only after its required inputs are available.
-7. Run the chosen trial script and save its output and configuration.
-8. Confirm that the vehicle reached the expected terminal state and that the result report was written.
+```bash
+python3 scripts/analysis/controllability.py
+```
 
-Do not copy generic launch commands into the final setup guide unless they match the installed PX4 version, the repository's launch files and the actual environment.
+---
 
-### D.4 Pre-flight checks
+## 23. Tests (current)
 
-Before enabling a simulated mission, verify:
+**557 automatic tests** in `src/uav_autonomy/test/`: **552 pass, 5 skipped**. The style
+checks (flake8/pep257) are reported separately. MuJoCo has 12 more headless tests
+(`simulation/mujoco/tests`, all pass).
 
-- PX4 is connected to the ROS 2 interface.
-- Required telemetry is updating.
-- The expected camera and depth topics publish messages.
-- The selected world and vehicle model loaded successfully.
-- Required perception and planning nodes are alive.
-- The configured VLM endpoint responds when confirmation is required.
-- The flight controller receives valid targets.
-- The failsafe and landing behaviour have been tested in simulation.
-
-### D.5 Troubleshooting guide
-
-| Symptom | Checks |
+| Area | Tests |
 |---|---|
-| No PX4 topics | Check the Micro XRCE-DDS Agent, PX4 client configuration, transport settings and ROS 2 environment |
-| No camera images | Check Gazebo sensor plugins, bridge configuration, topic names and message types |
-| Offboard mode rejected | Check setpoint pre-streaming, Offboard control-mode flags, telemetry and PX4 command acknowledgements |
-| VLM confirmation unavailable | Check the server process, endpoint, model name and request timeout |
-| ROS 2 package not found | Source the correct workspace's `install/setup.bash` and inspect the build result |
-| Mission returns early | Inspect mission-manager logs, input freshness, target validity and configured timeouts |
-| Simulation appears frozen | Check CPU/GPU load, Gazebo and PX4 logs, ROS 2 node activity and system memory |
+| Survivor perception (detector, confirmation, VLM handling) | 92 |
+| Debris avoidance | 75 |
+| Mission language | 61 |
+| Mission logic | 57 |
+| Search planning | 43 |
+| Navigation (A*) | 43 |
+| Debris tracking | 42 |
+| Survivor localisation | 38 |
+| Debris risk | 35 |
+| Flight safety | 26 |
+| Debris prediction | 24 |
+| Debris detection | 21 |
 
-## E. Evaluation Methodology and Reproducibility
+---
 
-The result tables in this README should be accompanied by a clear definition of each metric and the method used to collect it.
+## 24. Honest Limitations
 
-### E.1 Metric definitions
+- **Not GPS-denied flight.** PX4's EKF2 uses simulated GNSS. SLAM supplies the map, not the
+  pose that flies the drone, and in the urban world it is less accurate than PX4's odometry.
+- **2-D SLAM.** It is a single 6 m lidar slice. It cannot see slabs overhead, so interiors
+  are out of scope.
+- **CPU VLM.** Each answer takes 75–130 s and the 4B model is noisy (false rejects and odd
+  labels). A GPU driver (kernel 7.0.0-30) would make it about 10× faster.
+- **Real-time factor about 0.5** on Intel graphics. Under heavy load, telemetry gaps can
+  trip the watchdog; the demo raises `status_timeout_s` / `position_timeout_s` for this,
+  and documents it.
+- **Debris:** about 1 s of warning; failures with hard acceleration and sideways throws
+  (§10). Debris together with the CPU VLM in Gazebo was not reliable (failsafes from load),
+  so the debris demo is shown separately.
+- **MuJoCo:** ground-truth state, no sensor noise, no SLAM, simplified rubble. PX4 in the
+  loop covers hover and waypoints only.
+- **Controllability** (§15.3) is a property of the linearised hover model. It does not
+  cover large angles, saturation or aerodynamic effects beyond rotor drag.
+
+**Future work:** visual-inertial or lidar-inertial odometry replacing GNSS in EKF2, 3-D
+mapping, GPU VLM, human-pose detection, and hardware-in-the-loop on a real x500.
+
+---
+
+## 25. Metric Definitions
 
 | Metric | Definition |
 |---|---|
-| Mission completion rate | Number of completed trials divided by the number of valid trials, reported with the trial count |
-| Survivor precision | \(TP/(TP+FP)\), where \(TP\) is the number of correct positive detections and \(FP\) is the number of false positives |
-| Survivor recall | \(TP/(TP+FN)\), where \(FN\) is the number of missed ground-truth survivors |
-| Position error | Euclidean distance between an estimated position and the corresponding reference position |
-| Minimum separation | Minimum measured distance between the UAV and a tracked hazard during a trial |
-| Warning time | Time between the first usable hazard warning and the relevant closest-approach or impact event, with the event definition stated |
-| Search coverage | Fraction of the defined search region visited or observed according to a specified coverage rule |
-| End-to-end latency | Time between the sensor observation and the corresponding actionable output, measured with a consistent clock |
-| Test pass rate | Passed automated tests divided by tests executed, with skipped and failed tests reported separately |
-
-For a position estimate \(\hat{\mathbf{p}}\) and reference position \(\mathbf{p}_{\mathrm{ref}}\), the Euclidean position error is
-
-\[
-e_p = \|\hat{\mathbf{p}}-\mathbf{p}_{\mathrm{ref}}\|_2.
-\]
-
-The reference source must be specified. An error measured against simulator ground truth evaluates estimation accuracy in simulation; it does not show that ground truth was available to the running controller.
-
-For repeated trials, report the sample count and, where appropriate, mean, median, standard deviation, range and confidence intervals. Do not infer statistical significance from a small number of trials.
-
-### E.2 Separate types of evidence
-
-Report these categories separately:
-
-- **Unit tests:** individual functions or modules tested with controlled inputs.
-- **Integration tests:** multiple nodes or components interacting.
-- **Simulation trials:** the UAV completing a scenario in Gazebo or another simulator.
-- **Fault-injection tests:** a dependency is deliberately stopped, delayed or made unavailable.
-- **Hardware tests:** experiments performed on a physical vehicle, if any.
-
-A passing unit-test suite does not establish that every complete flight scenario succeeds. Similarly, a successful simulated flight does not establish hardware readiness.
-
-### E.3 Recommended experiment record
-
-For every reported trial, preserve:
-
-- Scenario and world configuration.
-- Random seed, when applicable.
-- Software versions and relevant parameter values.
-- Start and end time.
-- Mission outcome and reason for termination.
-- Survivor detections, confirmations, rejections and localisation errors.
-- Debris encounters, warning times, minimum separation and collisions.
-- Missing or stale data events.
-- Log and report locations.
-
-This makes it possible for another team member to reproduce a result and distinguish a code change from a change in the experimental setup.
-
-## F. Safety, Failure Handling and Operational Scope
-
-The application uses supervisory checks and a configured failsafe path, while PX4 also has its own flight-mode and failsafe behaviour. These layers should be described separately because they have different responsibilities.
-
-- The application layer monitors mission state, input freshness, targets and configured safety limits.
-- PX4 executes its internal control loops and applies the configured autopilot failsafe behaviour.
-- Gazebo supplies the simulated vehicle and environment dynamics for the tested experiments.
-
-Fault testing should identify which component failed, which component detected the failure, the response that followed, and whether the vehicle actually reached a safe terminal state. A request to return or land should not be reported as a successful landing unless the logs confirm it.
-
-All results in this repository should be interpreted as simulation evidence unless a specific result is explicitly identified as a hardware experiment. Real-world deployment would require additional risk assessment, hardware validation, sensor validation and supervised flight testing.
-
-## G. Additional Research and Development Directions
-
-The following are future directions, not claims of existing functionality:
-
-- Online SLAM or another validated GPS-denied vehicle-localisation pipeline.
-- More robust survivor recognition across varied human appearances, poses and lighting.
-- Better handling of occlusion, camera dropouts and delayed observations.
-- Prediction of debris under non-gravitational motion and simultaneous hazards.
-- Explicit coordination between search coverage, survivor localisation and avoidance.
-- Quantitative latency and compute-budget measurements for the full perception-to-control loop.
-- Larger repeated-trial evaluations across different worlds and random seeds.
-- Hardware-in-the-loop and physical-vehicle validation after simulation safety requirements are met.
-
-## H. Implementation and Evidence Checklist
-
-Before publishing a feature as implemented, verify it against source code, logs or a reproducible experiment.
-
-| Claim | Evidence to retain |
-|---|---|
-| The flight controller is the only application publisher of flight setpoints | Search source publishers and inspect the live ROS 2 graph |
-| Avoidance proposals are validated before use | Controller code and tests for valid, invalid and stale proposals |
-| VLM failure prevents survivor confirmation | Unit/integration test and corresponding trial log |
-| Survivor localisation is accurate | Ground-truth comparison in simulation with sample count and error statistics |
-| Debris prediction improves over baselines | Same scenarios and scoring procedure for each prediction method |
-| Failsafe behaviour works | Fault-injection logs and confirmed terminal vehicle state |
-| The whole mission is autonomous | End-to-end run record, including startup assumptions, mission outcome and intervention count |
-| The system is GPS-denied | Evidence that runtime localisation and control do not rely on GPS or simulator ground-truth pose |
-
-This checklist is intended to make the project easier to assess, reproduce and extend while keeping the distinction between implemented functionality, tested behaviour and future work explicit.
+| Localisation error | horizontal distance between the reported survivor and the true one (ground truth, offline only) |
+| Precision / recall | TP / (TP + FP), TP / (TP + FN) |
+| Coverage | cells imaged / cells in the search area (0.5 m grid) |
+| Box collision | box surface within 0.40 m of the vehicle centre |
+| SLAM RMSE | RMS of the SLAM pose minus true pose, over the flight |
+| Mission complete | landed safely and the report was written; `objective_met` additionally needs the area covered or a survivor confirmed |
+| Controllability | PBH rank of the linearised model = number of states |
+| Stability | all closed-loop eigenvalues have negative real parts |
