@@ -53,3 +53,33 @@ simulation/mujoco/.venv/
 .env
 .env.*
 !.env.example
+
+# Generated camera frames and debug images
+**/debug_frames/
+**/debug_images/
+**/debug_output/
+
+# Python environments and caches
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+
+# ROS 2 build output
+/build/
+/install/
+/log/
+**/build/
+**/install/
+**/log/
+
+# Simulation recordings
+*.ulog
+*.bag
+*.db3
+*.mcap
+
+# Local credentials
+.env
+.env.*
+!.env.example
