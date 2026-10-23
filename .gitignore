@@ -83,3 +83,23 @@ simulation/mujoco/.venv/
 .env
 .env.*
 !.env.example
+
+# Generated debug images
+**/debug_frames/
+**/debug_images/
+**/debug_output/
+
+# Build output and Python caches
+build/
+install/
+log/
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/venv/
+
+# Simulation recordings
+*.ulog
+*.bag
+*.db3
+*.mcap

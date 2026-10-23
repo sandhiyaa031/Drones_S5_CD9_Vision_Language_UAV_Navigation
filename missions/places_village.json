@@ -1,0 +1,33 @@
+{
+ "comment": "Named search areas of the village world, metres relative to the UAV base (takeoff point). The flight altitude is fixed at 6 m: that is the horizontal slice the lidar maps, and it is above the broken walls and below the standing structures. 'village' means the disaster district (both damaged buildings), not the whole settlement.",
+ "places": {
+  "collapsed_building": {
+   "description": "the large collapsed multi-storey building in the centre of the village",
+   "north": [29, 53], "east": [22, 48],
+   "aliases": ["collapsed building", "collapsed block", "disaster zone", "disaster site", "main building", "big building"],
+   "default_altitude_m": 6.0, "min_altitude_m": 6.0, "max_altitude_m": 6.0,
+   "default_time_budget_s": 300, "limit_range_m": 130, "limit_extent_m": 80, "limit_time_budget_s": 600
+  },
+  "damaged_house": {
+   "description": "the partly collapsed house east of the collapsed building",
+   "north": [34, 46], "east": [62, 74],
+   "aliases": ["damaged house", "small house", "partly collapsed house", "house with the courtyard"],
+   "default_altitude_m": 6.0, "min_altitude_m": 6.0, "max_altitude_m": 6.0,
+   "default_time_budget_s": 240, "limit_range_m": 130, "limit_extent_m": 80, "limit_time_budget_s": 600
+  },
+  "disaster_district": {
+   "description": "the disaster district: the collapsed building and the damaged house next to it",
+   "north": [29, 53], "east": [22, 74],
+   "aliases": ["disaster district", "both buildings", "district", "village", "whole village", "damaged buildings"],
+   "default_altitude_m": 6.0, "min_altitude_m": 6.0, "max_altitude_m": 6.0,
+   "default_time_budget_s": 480, "limit_range_m": 130, "limit_extent_m": 80, "limit_time_budget_s": 600
+  },
+  "market_square": {
+   "description": "the market square north of the collapsed building",
+   "north": [70, 86], "east": [23, 45],
+   "aliases": ["market square", "market", "square"],
+   "default_altitude_m": 6.0, "min_altitude_m": 6.0, "max_altitude_m": 6.0,
+   "default_time_budget_s": 240, "limit_range_m": 130, "limit_extent_m": 80, "limit_time_budget_s": 600
+  }
+ }
+}

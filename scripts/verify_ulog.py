@@ -137,7 +137,9 @@ def analyse(path, args):
     metrics['max_horizontal_range_m'] = round(max_range, 3)
     checks['no_excursion'] = bool(
         max_range <= args.max_range
-        and metrics['max_altitude_m'] <= args.target_alt + 1.0)
+        and metrics['max_altitude_m'] <= (
+            args.max_alt if args.max_alt is not None
+            else args.target_alt) + 1.0)
 
     # A collision appears as a horizontal acceleration far beyond anything
     # the multicopter can produce itself (a few m/s^2 in these missions).
@@ -175,6 +177,10 @@ def main():
     parser.add_argument('--radius', type=float, default=0.5)
     parser.add_argument('--landing-alt-tolerance', type=float, default=0.3)
     parser.add_argument('--max-range', type=float, default=15.0)
+    parser.add_argument('--max-alt', type=float, default=None,
+                        help='highest planned altitude, when the flight '
+                             'plan climbs above the target (e.g. a return '
+                             'altitude); default: the target altitude')
     parser.add_argument('--impact-accel', type=float, default=30.0,
                         help='horizontal acceleration [m/s^2] treated as '
                              'a collision')

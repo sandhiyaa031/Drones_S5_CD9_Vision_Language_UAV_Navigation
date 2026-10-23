@@ -1,0 +1,8 @@
+{
+ "name": "search_yard_battery",
+ "search_area": {"north": [-4, 12], "east": [-4, 4]},
+ "altitude_m": 5.0,
+ "time_budget_s": 240,
+ "stop_policy": "area_covered",
+ "battery_return_fraction": 0.85
+}

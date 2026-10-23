@@ -1,0 +1,29 @@
+{
+ "comment": "Named search areas, metres relative to the takeoff point (inside the collapsed building, under the roof opening). The language interpreter may only choose one of these keys; it can never produce coordinates.",
+ "places": {
+  "building": {
+   "description": "the collapsed building itself (inside its walls)",
+   "north": [-4, 4],
+   "east": [-4, 4],
+   "aliases": ["collapsed building", "building", "structure", "ruin", "ruins", "house", "inside", "indoors", "interior"],
+   "default_altitude_m": 5.0,
+   "min_altitude_m": 4.0
+  },
+  "north_yard": {
+   "description": "the open yard outside, north of the building",
+   "north": [4, 12],
+   "east": [-4, 4],
+   "aliases": ["north yard", "yard", "courtyard", "outside", "outdoors", "open ground"],
+   "default_altitude_m": 5.0,
+   "min_altitude_m": 4.0
+  },
+  "whole_site": {
+   "description": "the whole site: the building and the yard north of it",
+   "north": [-4, 12],
+   "east": [-4, 4],
+   "aliases": ["whole site", "entire site", "whole area", "entire area", "everywhere", "building and the yard", "building and yard", "site"],
+   "default_altitude_m": 5.0,
+   "min_altitude_m": 4.0
+  }
+ }
+}

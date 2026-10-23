@@ -1,0 +1,22 @@
+{
+ "name": "search_collapsed_block_vlm",
+ "search_area": {
+  "north": [
+   44.0,
+   72.0
+  ],
+  "east": [
+   14.0,
+   27.0
+  ]
+ },
+ "altitude_m": 6.0,
+ "time_budget_s": 420.0,
+ "stop_policy": "area_covered",
+ "require_vlm": true,
+ "require_debris_protection": false,
+ "battery_return_fraction": 0.25,
+ "limit_range_m": 130.0,
+ "limit_extent_m": 100.0,
+ "limit_time_budget_s": 600.0
+}

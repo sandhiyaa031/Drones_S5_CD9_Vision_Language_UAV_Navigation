@@ -1,0 +1,154 @@
+{
+ "comment": "Named search areas of the urban disaster zone, metres relative to the UAV base (takeoff point): north = world y, east = world x. The flight altitude is fixed at 6 m: the horizontal slice the lidar maps. The areas are EXTERIOR: rubble field, alley, street, courtyard floor. Interiors of standing structures are out of scope: the 2D lidar slice cannot see overhead or slabs just below its plane, and flights that entered a collapsed building through a facade opening ended in impacts (results/disaster_gazebo/live/*onebody, *demo1; simulation/mujoco/results/dev/mission_B_interior). The *_full places keep the old rectangles that include interiors; they are kept for stress tests and are NOT flight-safe.",
+ "places": {
+  "collapsed_block": {
+   "description": "the rubble field and the alley east of the collapsed multi-storey apartment block (exterior only)",
+   "north": [
+    44,
+    72
+   ],
+   "east": [
+    14,
+    27
+   ],
+   "aliases": [
+    "collapsed block",
+    "collapsed apartment block",
+    "apartment block",
+    "collapsed building",
+    "collapsed apartment building",
+    "main building",
+    "big building",
+    "rubble field",
+    "collapse zone"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 600,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  },
+  "commercial_block": {
+   "description": "the plaza and fallen facade south-west of the commercial building (exterior only)",
+   "north": [
+    34,
+    46
+   ],
+   "east": [
+    36,
+    46
+   ],
+   "aliases": [
+    "commercial block",
+    "commercial building",
+    "shopping block",
+    "fallen facade"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 180,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  },
+  "courtyard": {
+   "description": "the floor of the U-shaped courtyard (exterior only)",
+   "north": [
+    6,
+    20
+   ],
+   "east": [
+    53,
+    67
+   ],
+   "aliases": [
+    "courtyard",
+    "u-shaped courtyard",
+    "u shaped courtyard",
+    "courtyard complex",
+    "u-shaped complex"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 200,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  },
+  "disaster_zone": {
+   "description": "the exterior of the disaster zone: the rubble field and alley east of the collapsed block, the blocked street and the plaza west of the commercial building (exterior only)",
+   "north": [
+    24,
+    72
+   ],
+   "east": [
+    14,
+    43
+   ],
+   "aliases": [
+    "disaster zone",
+    "disaster area",
+    "disaster site",
+    "urban zone",
+    "the zone",
+    "the site",
+    "street corridor"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 420,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  },
+  "collapsed_block_full": {
+   "description": "the collapsed apartment block INCLUDING the standing west half and the alley (not flight-safe: interior slabs)",
+   "north": [
+    44,
+    72
+   ],
+   "east": [
+    -12,
+    26
+   ],
+   "aliases": [
+    "collapsed block interior",
+    "collapsed block including the interior"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 300,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  },
+  "disaster_zone_full": {
+   "description": "the whole zone rectangle INCLUDING building interiors (not flight-safe)",
+   "north": [
+    36,
+    72
+   ],
+   "east": [
+    -12,
+    70
+   ],
+   "aliases": [
+    "whole zone",
+    "whole site"
+   ],
+   "default_altitude_m": 6.0,
+   "min_altitude_m": 6.0,
+   "max_altitude_m": 6.0,
+   "default_time_budget_s": 540,
+   "limit_range_m": 130,
+   "limit_extent_m": 100,
+   "limit_time_budget_s": 600
+  }
+ }
+}

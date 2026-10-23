@@ -1,0 +1,7 @@
+{
+ "name": "search_yard_short_budget",
+ "search_area": {"north": [-4, 12], "east": [-4, 4]},
+ "altitude_m": 5.0,
+ "time_budget_s": 35,
+ "stop_policy": "area_covered"
+}

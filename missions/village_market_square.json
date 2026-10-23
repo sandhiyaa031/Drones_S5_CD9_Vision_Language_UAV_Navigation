@@ -1,0 +1,22 @@
+{
+ "name": "search_market_square",
+ "search_area": {
+  "north": [
+   70.0,
+   86.0
+  ],
+  "east": [
+   23.0,
+   45.0
+  ]
+ },
+ "altitude_m": 6.0,
+ "time_budget_s": 240.0,
+ "stop_policy": "area_covered",
+ "require_vlm": false,
+ "require_debris_protection": false,
+ "battery_return_fraction": 0.25,
+ "limit_range_m": 130.0,
+ "limit_extent_m": 80.0,
+ "limit_time_budget_s": 600.0
+}

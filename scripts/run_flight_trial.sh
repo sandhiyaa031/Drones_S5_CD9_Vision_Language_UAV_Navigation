@@ -33,6 +33,14 @@
 #                  camera; needs CAMERA_BRIDGE=1). SURVIVOR_ARGS = extra ROS
 #                  arguments. The VLM endpoint and model are taken from the
 #                  environment (VLM_ENDPOINT, VLM_MODEL) if set.
+#   MISSION_FILE   mission JSON: start the mission manager with it (use with
+#                  CONTROLLER_ARGS "-p mission_managed:=true")
+#   SLAM           1 = start the SLAM bridge and slam_toolbox (needs the
+#                  lidar model: MODELS_DIR=.../models_slam and
+#                  BRIDGE_CONFIG=.../bridge_village.yaml). SLAM_BRIDGE_ARGS.
+#   NAVIGATOR      1 = start the map-aware navigator. NAVIGATOR_ARGS.
+#   SEARCH_PLANNER 1 = start the search planner (use with CONTROLLER_ARGS
+#                  "-p search_mission:=true"). SEARCH_ARGS = extra ROS args.
 #   LOCALIZATION   1 = start the survivor localization node (needs
 #                  SURVIVOR=1). LOCALIZATION_ARGS = extra ROS arguments.
 #   AVOIDANCE      on = start the avoidance planner; baseline = start it
@@ -63,7 +71,7 @@ MODEL=${MODEL:-gz_x500_mono_cam_down}
 # script and PX4 attaches to it with the stock X500 airframe. "none" makes PX4
 # spawn its own MODEL instead (the Phase 0/1 configuration).
 PROJECT_MODEL=${PROJECT_MODEL:-x500_rescue}
-MODELS_DIR=$WS_DIR/src/uav_autonomy/models
+MODELS_DIR=${MODELS_DIR:-$WS_DIR/src/uav_autonomy/models}
 if [ "$PROJECT_MODEL" != "none" ] && [ -f "$MODELS_DIR/$PROJECT_MODEL/model.sdf" ]; then
     UAV_NAME=${PROJECT_MODEL}_0
     EXTRA_RESOURCE_PATH=${EXTRA_RESOURCE_PATH:-$MODELS_DIR}
@@ -99,7 +107,7 @@ mkdir -p "$RUN_DIR"
 RUN_DIR=$(cd "$RUN_DIR" && pwd)
 export RUN_DIR WS_DIR WORLD UAV_NAME
 
-stale=$(ps -eo pid,comm,args | awk '$2 ~ /^(px4|MicroXRCEAgent|flight_controll|parameter_bridg)$/ || ($2 ~ /^(ruby|gz)/ && /gz sim/) || ($2 ~ /^python/ && /gcs_heartbeat|ros2 run uav_autonomy/) || $2 ~ /^(debris_(depth_de|tracker|predicto|risk|avoidanc)|survivor_percep|survivor_locali)/ || ($2 ~ /^python/ && /scripts\/(sensor_study|sensor_integration|perception)\/|scripts\/avoidance\/(step_command|depth_gate)/)' || true)
+stale=$(ps -eo pid,comm,args | awk '$2 ~ /^(px4|MicroXRCEAgent|flight_controll|parameter_bridg)$/ || ($2 ~ /^(ruby|gz)/ && /gz sim/) || ($2 ~ /^python/ && /gcs_heartbeat|ros2 run uav_autonomy/) || $2 ~ /^(debris_(depth_de|tracker|predicto|risk|avoidanc)|survivor_percep|survivor_locali|search_planner|mission_manage|slam_bridge|async_slam_tool|navigator|mission_viz|rviz2)/ || ($2 ~ /^python/ && /ros2 launch slam_toolbox/) || ($2 ~ /^python/ && /scripts\/(sensor_study|sensor_integration|perception)\/|scripts\/avoidance\/(step_command|depth_gate)/)' || true)
 if [ -n "$stale" ]; then
     echo "REFUSING TO START: stale simulation processes are running:" >&2
     echo "$stale" >&2
@@ -120,7 +128,7 @@ fi
 PIDS=()
 sim_pids() {
     # PIDs of every simulation process, matched on the executable name.
-    ps -eo pid,comm,args | awk '$2 ~ /^(px4|MicroXRCEAgent|flight_controll|parameter_bridg)$/ || ($2 ~ /^(ruby|gz)/ && /gz sim/) || ($2 ~ /^python/ && /gcs_heartbeat|ros2 run uav_autonomy/) || $2 ~ /^(debris_(depth_de|tracker|predicto|risk|avoidanc)|survivor_percep|survivor_locali)/ || ($2 ~ /^python/ && /scripts\/(sensor_study|sensor_integration|perception)\/|scripts\/avoidance\/(step_command|depth_gate)/) {print $1}'
+    ps -eo pid,comm,args | awk '$2 ~ /^(px4|MicroXRCEAgent|flight_controll|parameter_bridg)$/ || ($2 ~ /^(ruby|gz)/ && /gz sim/) || ($2 ~ /^python/ && /gcs_heartbeat|ros2 run uav_autonomy/) || $2 ~ /^(debris_(depth_de|tracker|predicto|risk|avoidanc)|survivor_percep|survivor_locali|search_planner|mission_manage|slam_bridge|async_slam_tool|navigator|mission_viz|rviz2)/ || ($2 ~ /^python/ && /ros2 launch slam_toolbox/) || ($2 ~ /^python/ && /scripts\/(sensor_study|sensor_integration|perception)\/|scripts\/avoidance\/(step_command|depth_gate)/) {print $1}'
 }
 restore_px4_params() {
     [ -d "$PARAM_BACKUP_DIR" ] || return
@@ -195,10 +203,6 @@ if [ -f "$WORLD_SDF" ]; then
         exec gz sim --verbose=3 -r -s "$WORLD_SDF"
     ) > "$RUN_DIR/gazebo.log" 2>&1 &
     PIDS+=($!)
-    if [ "$HEADLESS" != "1" ]; then
-        gz sim -g > "$RUN_DIR/gazebo_gui.log" 2>&1 &
-        PIDS+=($!)
-    fi
     if [ "$PROJECT_MODEL" != "none" ]; then
         # Spawn the project model, then let PX4 attach to it (no PX4 edits).
         for _ in $(seq 40); do
@@ -221,6 +225,21 @@ if [ -f "$WORLD_SDF" ]; then
             cd "$ROOTFS" || exit 1
             PX4_GZ_STANDALONE=1 PX4_GZ_WORLD=$WORLD PX4_SIM_MODEL=$MODEL exec ../bin/px4 -d
         ) > "$RUN_DIR/px4.log" 2>&1 &
+        PIDS+=($!)
+    fi
+    if [ "$HEADLESS" != "1" ]; then
+        # The window is opened only AFTER the drone has been spawned: a window
+        # started earlier never draws the later-spawned drone (measured: the
+        # drone flew but was invisible in the window). The window needs the same model path as the server: without it the
+        # drone's meshes (model://x500_base/...) are not found and the drone is
+        # not drawn at all (it still flies in the server).
+        [ "$PROJECT_MODEL" = "none" ] && sleep 8
+        (
+            set +u
+            [ -n "${EXTRA_RESOURCE_PATH:-}" ] && export GZ_SIM_RESOURCE_PATH="$EXTRA_RESOURCE_PATH"
+            source "$ROOTFS/gz_env.sh"; set -u
+            exec gz sim -g
+        ) > "$RUN_DIR/gazebo_gui.log" 2>&1 &
         PIDS+=($!)
     fi
 else
@@ -304,12 +323,54 @@ if [ "${SURVIVOR:-0}" = "1" ]; then
     sleep 3
 fi
 
+if [ "${SLAM:-0}" = "1" ]; then
+    echo "[trial] starting SLAM bridge and slam_toolbox"
+    ros2 run uav_autonomy slam_bridge --ros-args -p use_sim_time:=true \
+        ${SLAM_BRIDGE_ARGS:-} > "$RUN_DIR/slam_bridge.log" 2>&1 &
+    PIDS+=($!)
+    ros2 launch slam_toolbox online_async_launch.py use_sim_time:=true \
+        slam_params_file:="${SLAM_PARAMS:-$WS_DIR/src/uav_autonomy/config/slam_toolbox_village.yaml}" \
+        > "$RUN_DIR/slam_toolbox.log" 2>&1 &
+    PIDS+=($!)
+fi
+if [ "${VIZ:-0}" = "1" ]; then
+    echo "[trial] starting display helpers and RViz"
+    ros2 run uav_autonomy mission_viz --ros-args -p use_sim_time:=true \
+        > "$RUN_DIR/mission_viz.log" 2>&1 &
+    PIDS+=($!)
+    rviz2 -d "${RVIZ_CONFIG:-$WS_DIR/src/uav_autonomy/config/village.rviz}" \
+        --ros-args -p use_sim_time:=true > "$RUN_DIR/rviz.log" 2>&1 &
+    PIDS+=($!)
+fi
+if [ "${NAVIGATOR:-0}" = "1" ]; then
+    echo "[trial] starting navigator"
+    ros2 run uav_autonomy navigator --ros-args -p use_sim_time:=true \
+        ${NAVIGATOR_ARGS:-} > "$RUN_DIR/navigator.log" 2>&1 &
+    PIDS+=($!)
+fi
+
+if [ "${SEARCH_PLANNER:-0}" = "1" ]; then
+    echo "[trial] starting search planner"
+    ros2 run uav_autonomy search_planner ${SEARCH_ARGS:-} \
+        > "$RUN_DIR/search_planner.log" 2>&1 &
+    PIDS+=($!)
+fi
+
 if [ "${LOCALIZATION:-0}" = "1" ]; then
     echo "[trial] starting survivor localization"
     ros2 run uav_autonomy survivor_localization ${LOCALIZATION_ARGS:-} \
         > "$RUN_DIR/survivor_localization.log" 2>&1 &
     PIDS+=($!)
     sleep 1
+fi
+
+if [ -n "${MISSION_FILE:-}" ]; then
+    echo "[trial] starting mission manager ($MISSION_FILE)"
+    ros2 run uav_autonomy mission_manager --ros-args \
+        -p mission_file:="$MISSION_FILE" \
+        -p report_path:="$RUN_DIR/mission_report.json" \
+        > "$RUN_DIR/mission_manager.log" 2>&1 &
+    PIDS+=($!)
 fi
 
 if [ -n "${PRE_HOOK:-}" ]; then
@@ -335,6 +396,9 @@ for _ in $(seq "$FLIGHT_TIMEOUT"); do
     fi
     if grep -q 'FAILSAFE' "$RUN_DIR/flight_controller.log"; then
         outcome=FAILSAFE; sleep "${POST_FAILSAFE_WAIT:-20}"; break
+    fi
+    if grep -qs 'MISSION REFUSED' "$RUN_DIR/mission_manager.log"; then
+        outcome=REFUSED; break
     fi
     sleep 1
 done

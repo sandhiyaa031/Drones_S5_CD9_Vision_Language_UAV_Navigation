@@ -1,0 +1,22 @@
+{
+ "name": "search_courtyard",
+ "search_area": {
+  "north": [
+   6.0,
+   20.0
+  ],
+  "east": [
+   53.0,
+   67.0
+  ]
+ },
+ "altitude_m": 6.0,
+ "time_budget_s": 200.0,
+ "stop_policy": "area_covered",
+ "require_vlm": false,
+ "require_debris_protection": false,
+ "battery_return_fraction": 0.25,
+ "limit_range_m": 130.0,
+ "limit_extent_m": 100.0,
+ "limit_time_budget_s": 600.0
+}
