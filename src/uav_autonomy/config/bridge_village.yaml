@@ -1,0 +1,33 @@
+# ros_gz_bridge configuration for the village missions: both cameras (as in
+# camera_bridge_rescue.yaml), the planar lidar and the simulation clock.
+- ros_topic_name: /camera/image_raw
+  gz_topic_name: /world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+- ros_topic_name: /camera/camera_info
+  gz_topic_name: /world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+- ros_topic_name: /depth_up/image_raw
+  gz_topic_name: /uav/depth_up/image
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+- ros_topic_name: /depth_up/camera_info
+  gz_topic_name: /uav/depth_up/camera_info
+  ros_type_name: sensor_msgs/msg/CameraInfo
+  gz_type_name: gz.msgs.CameraInfo
+  direction: GZ_TO_ROS
+# Planar lidar, body frame (tilts with the vehicle).
+- ros_topic_name: /uav/scan_raw
+  gz_topic_name: /uav/scan
+  ros_type_name: sensor_msgs/msg/LaserScan
+  gz_type_name: gz.msgs.LaserScan
+  direction: GZ_TO_ROS
+- ros_topic_name: /clock
+  gz_topic_name: /clock
+  ros_type_name: rosgraph_msgs/msg/Clock
+  gz_type_name: gz.msgs.Clock
+  direction: GZ_TO_ROS

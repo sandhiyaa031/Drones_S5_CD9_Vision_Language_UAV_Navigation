@@ -1106,7 +1106,10 @@ def test_online_code_has_no_ground_truth_input(ros, monkeypatch):
     node, _ = make_node(monkeypatch)
     try:
         topics = sorted(s.topic_name for s in node.subscriptions)
-        assert topics == ['/camera/camera_info', '/camera/image_raw']
+        # camera only, plus the planner's own status (used only to ask the
+        # VLM during oblique inspection views; no simulator or truth input)
+        assert topics == ['/camera/camera_info', '/camera/image_raw',
+                          '/planning/search/status']
         published = sorted(p.topic_name for p in node.publishers
                            if 'survivor' in p.topic_name)
         assert published == ['/perception/survivor/debug_image',

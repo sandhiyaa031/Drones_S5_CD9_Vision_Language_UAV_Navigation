@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Planar lidar for mapping and localisation.
+  360 degrees, 720 rays (0.5 degree), 10 Hz, 0.6 to 30 m, range noise 1 cm.
+  The scan plane is the body's horizontal plane (it tilts with the vehicle;
+  scan_leveler.py compensates with the attitude estimate).
+  Rays closer than 0.6 m are the vehicle's own legs and arms and are dropped.
+  Topic: /uav/scan (gz.msgs.LaserScan), frame lidar_link.
+-->
+<sdf version='1.9'>
+  <model name='lidar_2d'>
+    <self_collide>false</self_collide>
+    <static>false</static>
+    <link name="lidar_link">
+      <inertial>
+        <mass>0.050</mass>
+        <inertia>
+          <ixx>0.00004</ixx><ixy>0</ixy><ixz>0</ixz>
+          <iyy>0.00004</iyy><iyz>0</iyz><izz>0.00004</izz>
+        </inertia>
+      </inertial>
+      <visual name="lidar_2d/visual/housing">
+        <geometry><cylinder><radius>0.03</radius><length>0.04</length></cylinder></geometry>
+      </visual>
+      <sensor name="lidar_2d" type="gpu_lidar">
+        <gz_frame_id>lidar_link</gz_frame_id>
+        <pose>0 0 0 0 0 0</pose>
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-3.14159265</min_angle>
+              <max_angle>3.13286600</max_angle>
+            </horizontal>
+          </scan>
+          <range><min>0.6</min><max>30.0</max><resolution>0.01</resolution></range>
+          <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+        </ray>
+        <always_on>1</always_on>
+        <update_rate>10</update_rate>
+        <visualize>false</visualize>
+        <topic>/uav/scan</topic>
+      </sensor>
+      <gravity>true</gravity>
+      <velocity_decay />
+    </link>
+  </model>
+</sdf>

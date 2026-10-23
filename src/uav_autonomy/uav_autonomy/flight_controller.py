@@ -24,13 +24,26 @@ from rclpy.qos import (
     ReliabilityPolicy,
 )
 
-from uav_interfaces.msg import AvoidanceCommand, FlightStatus
+from uav_interfaces.msg import (
+    AvoidanceCommand, FlightStatus, MissionCommand, SearchGoal)
 
 from uav_autonomy.avoidance_interface import (
     AvoidanceLimits,
     limit_setpoint,
     recovered,
     validate_command,
+)
+from uav_autonomy.mission_interface import (
+    CMD_LAND_NOW,
+    CMD_RETURN_HOME,
+    CMD_START,
+    COMMAND_NAMES,
+    validate_mission_command,
+)
+from uav_autonomy.search_interface import (
+    SearchLimits,
+    goal_speed,
+    validate_goal,
 )
 from uav_autonomy.flight_safety import (
     FlightSafetyMonitor,
@@ -76,6 +89,7 @@ class FlightController(Node):
     STATE_WAYPOINT_2 = 'WAYPOINT_2'
     STATE_RETURN_HOME = 'RETURN_HOME'
     STATE_HOLD = 'HOLD'
+    STATE_SEARCH = 'SEARCH'
     STATE_REQUEST_LAND = 'REQUEST_LAND'
     STATE_LANDING = 'LANDING'
     STATE_COMPLETE = 'COMPLETE'
@@ -86,17 +100,18 @@ class FlightController(Node):
     ALTITUDE_EXCURSION_LIMIT_METERS = 1.0
     SAFETY_MONITORED_STATES = (
         STATE_TAKEOFF, STATE_WAYPOINT_1, STATE_WAYPOINT_2,
-        STATE_RETURN_HOME, STATE_HOLD, STATE_REQUEST_LAND, STATE_LANDING)
+        STATE_RETURN_HOME, STATE_HOLD, STATE_SEARCH, STATE_REQUEST_LAND,
+        STATE_LANDING)
     CRUISE_STATES = (
         STATE_WAYPOINT_1, STATE_WAYPOINT_2, STATE_RETURN_HOME,
-        STATE_REQUEST_LAND)
+        STATE_SEARCH, STATE_REQUEST_LAND)
 
     # Debris avoidance (docs/debris_avoidance.md). The planner proposes a
     # position setpoint; this controller validates it and remains the only
     # node that commands PX4. Additive: without commands nothing changes.
     AVOIDANCE_STATES = (
         STATE_TAKEOFF, STATE_WAYPOINT_1, STATE_WAYPOINT_2,
-        STATE_RETURN_HOME, STATE_HOLD)
+        STATE_RETURN_HOME, STATE_HOLD, STATE_SEARCH)
 
     def __init__(self):
         """Create verified PX4 publishers, subscribers, and mission state."""
@@ -128,6 +143,78 @@ class FlightController(Node):
         self.declare_parameter('transit_speed_limit', 0.0)
         self.transit_speed_limit = float(
             self.get_parameter('transit_speed_limit').value)
+        # Search mission (docs/search_planner.md): after takeoff the
+        # mission setpoint follows validated goals from the search planner;
+        # then return and land. Additive: off by default.
+        self.declare_parameter('search_mission', False)
+        self.search_mission = bool(
+            self.get_parameter('search_mission').value)
+        defaults = SearchLimits()
+        self.declare_parameter('search_max_range', defaults.max_range_m)
+        self.declare_parameter('search_max_seconds', defaults.max_search_s)
+        self.search_limits = SearchLimits(
+            max_range_m=float(self.get_parameter('search_max_range').value),
+            max_search_s=float(
+                self.get_parameter('search_max_seconds').value))
+        self.search_goal = None
+        self.search_rx = 0.0
+        self.search_started = None
+        self.search_last_valid = None
+        self.search_speed = self.search_limits.default_speed_m_s
+        self.search_accepted = 0
+        self.search_last_rejection = ''
+        # Mission manager (docs/mission_manager.md): with mission_managed
+        # the controller waits on the ground for a START command and accepts
+        # RETURN_HOME / LAND_NOW in flight. Additive: off by default.
+        self.declare_parameter('mission_managed', False)
+        self.mission_managed = bool(
+            self.get_parameter('mission_managed').value)
+        self.mission_cmd = None
+        self.mission_rx = 0.0
+        self.mission_sequence = 0
+        self.mission_started = False
+        self.mission_last_rejection = ''
+        # Safe return (village missions): before flying home in a straight
+        # line the vehicle first climbs to this height above the takeoff
+        # point, which must be above every structure. 0 = off (the earlier
+        # behaviour: return at the mission altitude).
+        # Freshness limit of PX4's vehicle_status [s]. Default: the same 1.0 s
+        # as the position limit (behaviour unchanged). PX4 publishes the
+        # status at about 2 Hz of SIMULATION time, so at a real-time factor
+        # near 0.5 two consecutive messages are already ~1 s apart in wall
+        # time and the default limit trips without any link loss (measured in
+        # the urban disaster world, docs/GAZEBO_DEMO_GUIDE.md). Position
+        # telemetry (50+ Hz) keeps the strict TELEMETRY_TIMEOUT_SECONDS.
+        # position_timeout_s: same idea for the position stream; default 1.0 = unchanged.
+        # Raised only for the CPU-VLM demo where the machine stalls PX4's DDS stream for
+        # more than a second of wall time without any link loss (measured, 4 failsafes).
+        self.declare_parameter('position_timeout_s',
+                               self.TELEMETRY_TIMEOUT_SECONDS)
+        self.position_timeout_s = max(
+            float(self.get_parameter('position_timeout_s').value),
+            self.TELEMETRY_TIMEOUT_SECONDS)
+        self.declare_parameter('status_timeout_s',
+                               self.TELEMETRY_TIMEOUT_SECONDS)
+        self.status_timeout_s = max(
+            float(self.get_parameter('status_timeout_s').value),
+            self.TELEMETRY_TIMEOUT_SECONDS)
+        # map_return: a mission RETURN_HOME in SEARCH does not start the
+        # return at once (a climb or a straight line is unsafe among
+        # collapsed structures): the controller stays in SEARCH, the navigator
+        # routes home on the SLAM map, and the return starts when its goal
+        # says "complete" near home. If that takes longer than
+        # map_return_timeout_s the ordinary return is started.
+        self.declare_parameter('map_return', False)
+        self.map_return = bool(self.get_parameter('map_return').value)
+        self.declare_parameter('map_return_timeout_s', 150.0)
+        self.map_return_timeout_s = float(
+            self.get_parameter('map_return_timeout_s').value)
+        self.map_return_deadline = None
+        self.declare_parameter('return_altitude', 0.0)
+        self.return_altitude = float(
+            self.get_parameter('return_altitude').value)
+        self.return_stage = None          # None, 'CLIMB' or 'TRAVEL'
+        self.return_timeout = self.WAYPOINT_TIMEOUT_SECONDS
         self.declare_parameter('hold_seconds', float(self.HOLD_SECONDS))
         self.HOLD_SECONDS = float(self.get_parameter('hold_seconds').value)
         for name in ('WAYPOINT_1_OFFSET_NORTH_METERS',
@@ -228,12 +315,18 @@ class FlightController(Node):
             self.avoidance_callback, 10)
         self.status_pub = self.create_publisher(
             FlightStatus, '/uav/flight_status', 10)
+        self.search_sub = self.create_subscription(
+            SearchGoal, '/planning/search/goal', self.search_callback, 10)
+        self.mission_sub = self.create_subscription(
+            MissionCommand, '/mission/command', self.mission_callback, 10)
 
         self.timer = self.create_timer(self.TICK_SECONDS, self.control_loop)
         sequence = (
             'Offboard -> arm -> 3 m -> waypoint 1 -> waypoint 2 -> '
             'return -> land'
             if self.waypoint_mission else
+            'Offboard -> arm -> takeoff -> search goals -> return -> land'
+            if self.search_mission else
             'Offboard -> arm -> 3 m -> 30 s hold -> land'
         )
         self.get_logger().info(
@@ -281,6 +374,85 @@ class FlightController(Node):
             self.get_logger().info(
                 f'Command {msg.command} ACK: '
                 f'{result_names.get(msg.result, str(msg.result))}')
+
+    def mission_callback(self, msg):
+        """Store the mission manager's command; validated each tick."""
+        self.mission_cmd = msg
+        self.mission_rx = time.monotonic()
+
+    RETURN_CLIMB_MIN_DISTANCE = 3.0     # closer to home: no climb needed
+    # During the climb the altitude setpoint stays at most this far above
+    # the vehicle, which keeps the climb rate near 1.5 m/s: a 12 m setpoint
+    # step would be flown at PX4's maximum (3 m/s), the safety monitor's
+    # vertical-speed limit.
+    RETURN_CLIMB_LEAD = 1.5
+
+    def _begin_return(self, now, reason):
+        """Enter RETURN_HOME; climb first if a return altitude is set."""
+        distance = math.hypot(float(self.position.x) - self.home_x,
+                              float(self.position.y) - self.home_y)
+        self.waypoint_started = now
+        self.return_timeout = max(self.WAYPOINT_TIMEOUT_SECONDS,
+                                  distance / 1.0 + 30.0)
+        if (self.return_altitude > 0.0
+                and distance > self.RETURN_CLIMB_MIN_DISTANCE):
+            self.return_stage = 'CLIMB'
+            self.target_x = float(self.position.x)
+            self.target_y = float(self.position.y)
+            # the climb target is raised step by step (see RETURN_CLIMB_LEAD)
+            self.target_z = float(self.position.z)
+            self._set_state(
+                self.STATE_RETURN_HOME,
+                f'{reason}; climbing to the return altitude '
+                f'{self.return_altitude:.1f} m, then returning to the '
+                f'takeoff point ({self.home_x:.1f}, {self.home_y:.1f}) NED')
+            return
+        self.return_stage = None
+        self.target_x = self.home_x
+        self.target_y = self.home_y
+        self._set_state(
+            self.STATE_RETURN_HOME,
+            f'{reason}; returning to the takeoff point '
+            f'({self.target_x:.1f}, {self.target_y:.1f}) NED')
+
+    def _handle_mission_command(self, now):
+        """Act on a new, valid mission command (once per sequence)."""
+        cmd = self.mission_cmd
+        if cmd is None or not self.mission_managed:
+            return
+        ok, reason = validate_mission_command(
+            int(cmd.command), int(cmd.sequence), self.mission_sequence,
+            now - self.mission_rx, self.state)
+        if not ok:
+            if reason and reason != self.mission_last_rejection:
+                self.mission_last_rejection = reason
+                self.get_logger().warning(
+                    f'Mission command refused: {reason}')
+            return
+        self.mission_sequence = int(cmd.sequence)
+        self.mission_last_rejection = ''
+        name = COMMAND_NAMES[int(cmd.command)]
+        self.get_logger().info(
+            f'MISSION command {name} accepted in {self.state}: {cmd.reason}')
+        if cmd.command == CMD_START:
+            self.mission_started = True
+        elif cmd.command == CMD_RETURN_HOME:
+            if self.map_return and self.state == self.STATE_SEARCH:
+                self.map_return_deadline = now + self.map_return_timeout_s
+                self.get_logger().info(
+                    f'MISSION return requested ({cmd.reason}): staying in '
+                    'SEARCH while the navigator routes home on the SLAM map')
+            else:
+                self._begin_return(now, f'mission manager: {cmd.reason}')
+        elif cmd.command == CMD_LAND_NOW:
+            self._set_state(
+                self.STATE_REQUEST_LAND,
+                f'mission manager: {cmd.reason}; requesting AUTO LAND')
+
+    def search_callback(self, msg):
+        """Store the planner's latest goal; it is validated each tick."""
+        self.search_goal = msg
+        self.search_rx = time.monotonic()
 
     def avoidance_callback(self, msg):
         """Store the planner's latest proposal; it is validated each tick."""
@@ -353,6 +525,9 @@ class FlightController(Node):
         limits = []
         if self.transit_speed_limit > 0.0:
             limits.append(self.transit_speed_limit)
+        if (self.search_mission or self.mission_managed) and self.state in (
+                self.STATE_SEARCH, self.STATE_RETURN_HOME):
+            limits.append(self.search_speed)      # never uncapped
         cmd = self.avoid_cmd
         if (cmd is not None and math.isfinite(cmd.speed_limit)
                 and cmd.speed_limit > 0.0):
@@ -510,8 +685,8 @@ class FlightController(Node):
         return (
             self.position is not None
             and self.status is not None
-            and now - self.last_position_rx <= self.TELEMETRY_TIMEOUT_SECONDS
-            and now - self.last_status_rx <= self.TELEMETRY_TIMEOUT_SECONDS
+            and now - self.last_position_rx <= self.position_timeout_s
+            and now - self.last_status_rx <= self.status_timeout_s
             and self.position.xy_valid
             and self.position.z_valid
         )
@@ -532,7 +707,8 @@ class FlightController(Node):
                        f'(detected in {self.state})')
             return
         if (self.state in self.CRUISE_STATES
-                and not (self.avoid_active or self.avoid_recovering)):
+                and not (self.avoid_active or self.avoid_recovering)
+                and self.return_stage is None):
             reason = altitude_excursion(
                 self._altitude_above_start(), self.TARGET_ALTITUDE_METERS,
                 self.ALTITUDE_EXCURSION_LIMIT_METERS)
@@ -547,12 +723,12 @@ class FlightController(Node):
                 position_fresh = (
                     self.position is not None
                     and now - self.last_position_rx
-                    <= self.TELEMETRY_TIMEOUT_SECONDS
+                    <= self.position_timeout_s
                 )
                 status_fresh = (
                     self.status is not None
                     and now - self.last_status_rx
-                    <= self.TELEMETRY_TIMEOUT_SECONDS
+                    <= self.status_timeout_s
                 )
                 telemetry_ready = self._telemetry_fresh()
                 self.get_logger().info(
@@ -578,8 +754,15 @@ class FlightController(Node):
             self._publish_offboard_stream()
 
         now = time.monotonic()
+        self._handle_mission_command(now)
 
         if self.state == self.STATE_WAIT_FOR_DATA:
+            if (self._telemetry_fresh() and self.mission_managed
+                    and not self.mission_started):
+                self.get_logger().info(
+                    'Telemetry ready; waiting on the ground for the mission '
+                    'manager\'s START command', throttle_duration_sec=5.0)
+                return
             if self._telemetry_fresh():
                 self.target_x = float(self.position.x)
                 self.target_y = float(self.position.y)
@@ -715,6 +898,14 @@ class FlightController(Node):
             if (math.isfinite(altitude)
                     and abs(altitude - self.TARGET_ALTITUDE_METERS)
                     <= self.ALTITUDE_TOLERANCE_METERS):
+                if self.search_mission:
+                    self.search_started = now
+                    self.search_last_valid = now
+                    self._set_state(
+                        self.STATE_SEARCH,
+                        f'takeoff verified at {altitude:.2f} m; holding '
+                        'until the search planner sends a valid goal')
+                    return
                 if self.waypoint_mission:
                     self.target_x = (
                         self.home_x + self.WAYPOINT_1_OFFSET_NORTH_METERS)
@@ -755,18 +946,40 @@ class FlightController(Node):
                 f'{self.state}: horizontal error {distance:.2f} m; '
                 f'altitude {altitude:.2f} m',
                 throttle_duration_sec=1.0)
-            if now - self.waypoint_started > self.WAYPOINT_TIMEOUT_SECONDS:
+            returning = (self.state == self.STATE_RETURN_HOME
+                         and self.return_stage is not None)
+            timeout = (self.return_timeout
+                       if self.state == self.STATE_RETURN_HOME
+                       else self.WAYPOINT_TIMEOUT_SECONDS)
+            if now - self.waypoint_started > timeout:
                 self._fail(
                     f'{self.state} timed out at {distance:.2f} m from target')
+                return
+            if returning and self.return_stage == 'CLIMB':
+                self.target_z = max(
+                    self.ground_z - self.return_altitude,
+                    float(self.position.z) - self.RETURN_CLIMB_LEAD)
+                if (math.isfinite(altitude)
+                        and abs(altitude - self.return_altitude) <= 0.5):
+                    self.return_stage = 'TRAVEL'
+                    self.target_z = self.ground_z - self.return_altitude
+                    self.target_x = self.home_x
+                    self.target_y = self.home_y
+                    self.get_logger().info(
+                        f'RETURN_HOME: at {altitude:.2f} m, above the '
+                        'structures; flying to the takeoff point')
                 return
             if (self.arrival_max_speed > 0.0 and math.hypot(
                     float(self.position.vx), float(self.position.vy))
                     > self.arrival_max_speed):
                 return
+            expected = (self.return_altitude if returning
+                        else self.TARGET_ALTITUDE_METERS)
             if (distance > self.WAYPOINT_RADIUS_METERS
                     or not math.isfinite(altitude)
-                    or abs(altitude - self.TARGET_ALTITUDE_METERS)
-                    > self.ALTITUDE_HOLD_TOLERANCE_METERS):
+                    or abs(altitude - expected)
+                    > max(self.ALTITUDE_HOLD_TOLERANCE_METERS,
+                          0.5 if returning else 0.0)):
                 return
 
             if self.state == self.STATE_WAYPOINT_1:
@@ -792,6 +1005,57 @@ class FlightController(Node):
                     self.STATE_REQUEST_LAND,
                     f'home reached at altitude {altitude:.2f} m; '
                     'requesting AUTO LAND')
+            return
+
+        if self.state == self.STATE_SEARCH:
+            if self.status.arming_state != VehicleStatus.ARMING_STATE_ARMED:
+                self._fail('PX4 disarmed during the search')
+                return
+            if (self.status.nav_state
+                    != VehicleStatus.NAVIGATION_STATE_OFFBOARD):
+                self._fail('PX4 left Offboard during the search')
+                return
+            leave = None
+            goal = self.search_goal
+            if goal is not None:
+                ok, reason = validate_goal(
+                    (goal.target.x, goal.target.y),
+                    (self.home_x, self.home_y), now - self.search_rx,
+                    self.search_limits)
+                if ok:
+                    self.search_last_valid = now
+                    self.search_last_rejection = ''
+                    if goal.complete:
+                        leave = 'search planner reports the search complete'
+                    else:
+                        if (goal.target.x != self.target_x
+                                or goal.target.y != self.target_y):
+                            self.search_accepted += 1
+                        self.target_x = float(goal.target.x)
+                        self.target_y = float(goal.target.y)
+                        self.search_speed = goal_speed(
+                            goal.speed_limit, self.search_limits)
+                elif reason != self.search_last_rejection:
+                    self.search_last_rejection = reason
+                    self.get_logger().warning(
+                        f'Search goal refused: {reason}')
+            if leave is None and (now - self.search_last_valid
+                                  > self.search_limits.lost_planner_s):
+                leave = (f'no valid search goal for '
+                         f'{now - self.search_last_valid:.1f} s')
+            if leave is None and (now - self.search_started
+                                  > self.search_limits.max_search_s):
+                leave = 'search time budget used'
+            if leave is None and self.map_return_deadline is not None \
+                    and now > self.map_return_deadline:
+                leave = 'map-routed return did not finish in time'
+            self.get_logger().info(
+                f'SEARCH: goal ({self.target_x:.1f}, {self.target_y:.1f}) '
+                f'cap {self.search_speed:.1f} m/s; altitude '
+                f'{self._altitude_above_start():.2f} m; goals accepted '
+                f'{self.search_accepted}', throttle_duration_sec=2.0)
+            if leave is not None:
+                self._begin_return(now, leave)
             return
 
         if self.state == self.STATE_HOLD:

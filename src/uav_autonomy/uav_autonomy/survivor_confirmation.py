@@ -81,6 +81,11 @@ class ConfirmationParams:
     reverify_interval_s: float = 10.0
     reverify_area_gain: float = 2.0
     min_crop_px: int = 16
+    # 0 = unlimited. Slow (CPU) VLM: stop asking once this many answers
+    # exist, or once a crop was confirmed (a late answer for a track that
+    # left the view is lost, so extra requests only cost time).
+    max_answers: int = 0
+    stop_after_confirm: bool = False
 
 
 @dataclass
@@ -285,6 +290,11 @@ class SurvivorMonitor:
                     continue
                 rank = 1
             else:
+                if p.max_answers > 0 and len(track.answers) >= p.max_answers:
+                    continue
+                if p.stop_after_confirm and any(
+                        a.decision == 'confirm' for a in track.answers):
+                    continue
                 grown = (track.verified_area > 0 and track.area
                          >= p.reverify_area_gain * track.verified_area)
                 due = (p.reverify_interval_s > 0

@@ -3,3 +3,53 @@ install/
 log/
 __pycache__/
 *.pyc
+
+# Large binary flight logs stay local; verification.json records the result.
+results/**/*.ulg
+results/**/frames_raw/
+results/**/*.npy
+results/**/*.npz
+.px4_param_backup/
+results/**/poses.csv
+
+# Generated build/runtime directories
+build/
+install/
+log/
+
+# Python caches
+__pycache__/
+*.pyc
+
+# Raw simulation artifacts
+results/**/*.ulg
+results/**/*.jsonl
+results/**/*.csv
+results/**/debug_frames/
+results/**/frames_raw/
+results/**/*.npy
+results/**/*.npz
+
+# Generated ROS 2 and Python files
+build/
+install/
+log/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# MuJoCo Python environment
+simulation/mujoco/.venv/
+
+# Generated simulation recordings
+*.ulg
+*.bag
+*.db3
+*.mcap
+
+# Local credentials
+.env
+.env.*
+!.env.example

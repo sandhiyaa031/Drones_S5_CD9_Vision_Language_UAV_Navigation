@@ -94,6 +94,13 @@ class SurvivorPerceptionNode(Node):
                                os.environ.get('VLM_ENDPOINT', ''))
         self.declare_parameter('vlm_model', os.environ.get('VLM_MODEL', ''))
         self.declare_parameter('vlm_timeout_s', 30.0)
+        # Ask the VLM only while the search planner is inspecting a candidate
+        # (oblique views from 2-4 m): the small local model rejects most
+        # crops taken from straight above (docs/survivor_perception.md).
+        self.declare_parameter('request_only_when_inspecting', False)
+        # Save every crop sent to the VLM here (evidence); '' = off.
+        self.declare_parameter('crop_dir', '')
+        self.inspecting = False
         self.declare_parameter('debug_every', 3)      # frames; 0 = off
         self.declare_parameter('debug_scale', 0.5)
         self.vlm_config = VlmConfig(
@@ -122,6 +129,8 @@ class SurvivorPerceptionNode(Node):
         self.create_subscription(CameraInfo, '/camera/camera_info',
                                  self.on_info, qos_profile_sensor_data)
         self.create_timer(0.1, self.collect_vlm)
+        self.create_subscription(String, '/planning/search/status',
+                                 self.on_search_status, 5)
         endpoint = self.vlm_config.endpoint or '<none>'
         self.get_logger().info(
             'Survivor perception ready (simulation baseline detector). '
@@ -138,6 +147,12 @@ class SurvivorPerceptionNode(Node):
         """Remember the camera frame and image size."""
         self.camera_frame = msg.header.frame_id
         self.info_size = (int(msg.width), int(msg.height))
+
+    def on_search_status(self, msg):
+        try:
+            self.inspecting = json.loads(msg.data).get('state') == 'INSPECTING'
+        except ValueError:
+            pass
 
     def collect_vlm(self):
         """Apply finished VLM requests (called from a timer and per frame)."""
@@ -204,10 +219,23 @@ class SurvivorPerceptionNode(Node):
 
         self.collect_vlm()
         stable = self.monitor.update(stamp, candidates)
+        allowed = (not self.get_parameter('request_only_when_inspecting').value
+                   or self.inspecting)
         request = self.monitor.next_request(time.monotonic(),
-                                            self.worker.usable)
+                                            self.worker.usable) \
+            if allowed else None
         if request is not None:
             c = request.candidate
+            crop_dir = str(self.get_parameter('crop_dir').value)
+            if crop_dir:
+                import cv2
+                from uav_autonomy.vlm_client import crop_region
+                os.makedirs(crop_dir, exist_ok=True)
+                x0, y0, x1, y1 = crop_region(bgr.shape, (c.x, c.y, c.width, c.height),
+                                             self.vlm_config.pad_fraction)
+                cv2.imwrite(os.path.join(
+                    crop_dir, f'track{request.track_id}_t{stamp:.1f}.png'),
+                    bgr[y0:y1, x0:x1])
             job = self.worker.submit(
                 bgr, (c.x, c.y, c.width, c.height),
                 {'track_id': request.track_id, 'stamp': stamp,

@@ -95,6 +95,12 @@ class LocalizerParams:
     association_chi2: float = 6.0
     # two reported entities closer than this are the same object
     merge_distance_m: float = 0.5
+    # an entity seen from one direction only has a long uncertainty along
+    # its viewing ray; it is merged into another entity when the two agree
+    # within that uncertainty (3 dof chi-square, 95 %) and are no further
+    # apart than merge_coarse_distance_m
+    merge_chi2: float = 7.8
+    merge_coarse_distance_m: float = 1.5
     min_observations: int = 5            # before a position is reported
     localized_sigma_m: float = 0.5       # horizontal 1-sigma for LOCALIZED
     localized_min_observations: int = 10
@@ -253,7 +259,9 @@ class SurvivorLocalizer:
             h = projection_jacobian(entity.position, cam_position, rot,
                                     self.cam)
             rng = float(np.linalg.norm(entity.position - cam_position))
-            s = h @ entity.covariance @ h.T + np.eye(2) * \
+            # the box centre of one object moves with the viewing direction:
+            # allow for it with the systematic floor
+            s = h @ self.reported_covariance(entity) @ h.T + np.eye(2) * \
                 self._pixel_variance(det, rng)
             innovation = z - predicted
             d = float(innovation @ np.linalg.solve(s, innovation))
@@ -271,13 +279,20 @@ class SurvivorLocalizer:
                 a, b = self.entities.get(a_id), self.entities.get(b_id)
                 if a is None or b is None:
                     continue
-                if np.linalg.norm(a.position[:2] - b.position[:2]) \
-                        > p.merge_distance_m:
-                    continue
+                gap = float(np.linalg.norm(a.position[:2] - b.position[:2]))
+                if gap > p.merge_distance_m:
+                    if gap > p.merge_coarse_distance_m:
+                        continue
+                    delta = a.position - b.position
+                    if float(delta @ np.linalg.solve(
+                            a.covariance + b.covariance, delta)) \
+                            > p.merge_chi2:
+                        continue
                 ia, ib = np.linalg.inv(a.covariance), \
                     np.linalg.inv(b.covariance)
                 cov = np.linalg.inv(ia + ib)
                 a.position = cov @ (ia @ a.position + ib @ b.position)
+                a.first_stamp = min(a.first_stamp, b.first_stamp)
                 # the two estimates share their errors: keep the smaller
                 # covariance rather than the fused one
                 a.covariance = a.covariance if np.trace(a.covariance) \

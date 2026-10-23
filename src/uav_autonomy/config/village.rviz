@@ -1,0 +1,168 @@
+# RViz configuration for the village missions.
+# Fixed frame "map" = the SLAM map. Everything shown comes from a topic that
+# a project node publishes; see docs/village_system.md, "Visualisation".
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Map
+      Name: SLAM map (estimated occupancy)
+      Enabled: true
+      Topic:
+        Value: /map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 5
+      Alpha: 0.85
+      Color Scheme: map
+      Draw Behind: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: Lidar scan (levelled)
+      Enabled: true
+      Topic:
+        Value: /uav/scan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Size: 0.12
+      Style: Flat Squares
+      Color Transformer: FlatColor
+      Color: 255; 60; 60
+      Size (m): 0.12
+    - Class: rviz_default_plugins/Path
+      Name: Planned route (navigator, on the map)
+      Enabled: true
+      Topic:
+        Value: /planning/navigator/path
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 40; 220; 255
+      Line Style: Billboards
+      Line Width: 0.25
+    - Class: rviz_default_plugins/Path
+      Name: Flown path (PX4 estimate)
+      Enabled: true
+      Topic:
+        Value: /viz/flown_path
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 255; 255; 255
+      Line Style: Lines
+    - Class: rviz_default_plugins/Path
+      Name: Flown path (SLAM estimate)
+      Enabled: true
+      Topic:
+        Value: /viz/slam_path
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 255; 120; 255
+      Line Style: Lines
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Mission state, base, search area, report labels
+      Enabled: true
+      Topic:
+        Value: /viz/mission
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Search lanes (planner)
+      Enabled: true
+      Topic:
+        Value: /planning/search/markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Survivor positions and uncertainty
+      Enabled: true
+      Topic:
+        Value: /perception/survivor/location_markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Debris tracks
+      Enabled: true
+      Topic:
+        Value: /perception/debris/track_markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Debris predictions
+      Enabled: true
+      Topic:
+        Value: /perception/debris/prediction_markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Collision risk
+      Enabled: true
+      Topic:
+        Value: /perception/debris/risk_markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/MarkerArray
+      Name: Avoidance candidates and choice
+      Enabled: true
+      Topic:
+        Value: /perception/debris/avoidance_markers
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+    - Class: rviz_default_plugins/TF
+      Name: Frames
+      Enabled: true
+      Show Names: true
+      Marker Scale: 4.0
+      Frame Timeout: 15
+    - Class: rviz_default_plugins/Image
+      Name: Downward camera with survivor candidates
+      Enabled: true
+      Topic:
+        Value: /perception/survivor/debug_image
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+  Global Options:
+    Background Color: 30; 30; 34
+    Fixed Frame: map
+    Frame Rate: 15
+  Tools:
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Measure
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: Current View
+      Scale: 7
+      X: 35
+      Y: 30
+      Angle: 0
+      Target Frame: map
+Window Geometry:
+  Height: 1000
+  Width: 1300

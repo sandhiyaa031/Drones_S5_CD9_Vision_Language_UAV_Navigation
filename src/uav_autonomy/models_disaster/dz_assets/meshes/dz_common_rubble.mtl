@@ -1,0 +1,5 @@
+newmtl mat
+Ka 0.6 0.6 0.6
+Kd 1 1 1
+Ks 0.02 0.02 0.02
+map_Kd tex_rubble.png

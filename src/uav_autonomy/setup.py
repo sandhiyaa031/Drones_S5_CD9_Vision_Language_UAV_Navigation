@@ -40,6 +40,11 @@ setup(
             'uav_autonomy.survivor_perception_node:main',
             'survivor_localization = '
             'uav_autonomy.survivor_localization_node:main',
+            'search_planner = uav_autonomy.search_planner_node:main',
+            'mission_manager = uav_autonomy.mission_manager_node:main',
+            'slam_bridge = uav_autonomy.slam_bridge_node:main',
+            'navigator = uav_autonomy.navigator_node:main',
+            'mission_viz = uav_autonomy.mission_viz_node:main',
             'continuous_debris_spawner = '
             'uav_autonomy.continuous_debris_spawner:main',
         ],

@@ -343,6 +343,38 @@ def test_duplicate_entities_are_merged():
     assert sorted(entity.track_ids) == [1, 2] and entity.confirmed
 
 
+def test_one_view_ghost_is_merged_into_a_localised_entity():
+    """A second entry seen from one direction only, lying on a ray that
+    passes the first entry, is the same object."""
+    loc = SurvivorLocalizer(CAM, LocalizerParams(association_chi2=0.0),
+                            ground_down=0.0)
+    target = np.array([6.0, 1.0, -1.7])       # top of a standing person
+    q = quat()
+    for i in range(100):
+        position = np.array([1.5 + 0.1 * i, 0.0, -5.0])
+        loc.update(10.0 + 0.2 * i, [observe(target, position, q)],
+                   (position, q))
+    assert len(loc.reported()) == 1
+    position = np.array([3.5, -1.0, -5.0])
+    for i in range(8):
+        loc.update(40.0 + 0.07 * i,
+                   [observe(target, position, q, track_id=9)], (position, q))
+    assert len(loc.reported()) == 1
+    assert np.linalg.norm(loc.reported()[0].position - target) < 0.15
+
+
+def test_two_localised_objects_are_not_merged_by_the_coarse_rule():
+    loc = SurvivorLocalizer(CAM, LocalizerParams(), ground_down=0.0)
+    a, b = np.array([6.0, 0.0, -0.9]), np.array([6.0, 1.1, -0.9])
+    q = quat()
+    for i in range(100):
+        position = np.array([1.5 + 0.1 * i, 0.5, -5.0])
+        loc.update(10.0 + 0.2 * i, [observe(a, position, q, track_id=1),
+                                    observe(b, position, q, track_id=2)],
+                   (position, q))
+    assert len(loc.reported()) == 2
+
+
 def test_short_blip_is_dropped_after_timeout():
     loc = SurvivorLocalizer(CAM, LocalizerParams(), ground_down=0.0)
     position, q = np.array([0, 0, -5.0]), quat()
