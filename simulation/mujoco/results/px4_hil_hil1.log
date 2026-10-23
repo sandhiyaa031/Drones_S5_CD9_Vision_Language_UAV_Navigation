@@ -1,0 +1,4 @@
+[trial] MuJoCo HIL bridge
+[trial] PX4 (10016_none_iris)
+[trial] flight_controller (hover at 3.0 m)
+scripts/run_px4_mujoco_trial.sh: line 34: 205752 Killed                  MicroXRCEAgent udp4 -p 8888 > "$RUN_DIR/xrce_agent.log" 2>&1

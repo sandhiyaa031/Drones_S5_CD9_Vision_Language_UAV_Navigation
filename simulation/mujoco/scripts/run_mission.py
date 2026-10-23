@@ -1,0 +1,408 @@
+#!/usr/bin/env python3
+"""MuJoCo rescue mission: sentence -> search -> detect -> localise -> return.
+
+Uses the project's own autonomy modules (no ROS): mission_language (rules
+interpreter and place catalogue), search_planning (coverage lanes and
+candidate inspections), navigation (A* on a map), survivor_detection (HSV +
+shape detector on the rendered camera image) and survivor_localization (EKF).
+
+Labels in the report: vehicle pose = simulator state (NOT PX4, NOT SLAM);
+map = lidar rays with known pose (NOT SLAM); no VLM: candidates are
+UNVERIFIED and a look-alike can be reported as a candidate.
+
+Usage: run_mission.py ["instruction"] [--scene urban_B] [--gui]
+       [--budget SECONDS] [--debris] [--out DIR]
+"""
+
+import argparse
+import json
+import math
+import os
+import sys
+import time
+
+import numpy as np
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.abspath(os.path.join(HERE, '..'))
+AUTONOMY = os.path.abspath(os.path.join(ROOT, '..', '..', 'src',
+                                        'uav_autonomy'))
+sys.path.insert(0, ROOT)
+sys.path.insert(0, AUTONOMY)
+
+from controllers.behaviours import Carrot, land, takeoff  # noqa: E402
+from controllers.flight_sim import OccupancyMap, Sim  # noqa: E402
+from controllers.behaviours import Carrot as _C  # noqa: E402,F401
+from controllers.flight_sim import Setpoint  # noqa: E402
+from controllers.perception import (  # noqa: E402
+    FX, FY, H, W, DownCamera, Tracker, pose_ned_frd)
+from uav_autonomy import search_planning as sp  # noqa: E402
+from uav_autonomy import survivor_detection as sd  # noqa: E402
+from uav_autonomy import survivor_localization as sl  # noqa: E402
+from uav_autonomy.mission_language import (  # noqa: E402
+    STATUS_ACCEPTED, interpret, load_catalogue)
+from uav_autonomy.navigation import (NavParams, Navigator,  # noqa: E402
+                                     PlanningGrid)
+
+PLACES = os.path.join(AUTONOMY, '..', '..', 'missions', 'places_disaster.json')
+DEFAULT = ('Search the collapsed apartment block for survivors, report '
+           'survivor locations, and return to base.')
+ALT = 6.0
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument('instruction', nargs='?', default=DEFAULT)
+    ap.add_argument('--scene', default='urban_B')
+    ap.add_argument('--gui', action='store_true')
+    ap.add_argument('--budget', type=float, default=None,
+                    help='override the search time budget [s] (sim time)')
+    ap.add_argument('--out')
+    ap.add_argument('--debris', type=int, default=0, help='number of falling debris boxes released during the search (with the avoidance chain)')
+    ap.add_argument('--vlm', default='', help='Ollama model name, e.g. gemma3-4b-cpu: crops of candidates go to the VLM')
+    ap.add_argument('--vlm-endpoint', default='http://127.0.0.1:11434/v1')
+    ap.add_argument('--vlm-timeout', type=float, default=170.0)
+    args = ap.parse_args()
+
+    # 1. sentence -> mission (ground, before takeoff)
+    cat = load_catalogue(os.path.abspath(PLACES))
+    result = interpret(args.instruction, cat, 'rules')
+    if result.status != STATUS_ACCEPTED:
+        print('MISSION REFUSED:', result.reasons)
+        return 2
+    mission = result.mission_dict()
+    print('mission:', json.dumps(mission))
+    area = sp.SearchArea(mission['search_area']['north'][0],
+                         mission['search_area']['north'][1],
+                         mission['search_area']['east'][0],
+                         mission['search_area']['east'][1])
+    budget = args.budget or float(mission['time_budget_s'])
+
+    sim = Sim(args.scene, gui=args.gui, realtime=args.gui)
+    camera = DownCamera(sim.m, sim.d)
+    cam_model = sl.CameraModel(fx=FX, fy=FY, cx=W / 2.0, cy=H / 2.0,
+                               width=W, height=H)
+    localizer = sl.SurvivorLocalizer(cam_model, ground_down=0.0)
+    worker = None
+    if args.vlm:
+        from uav_autonomy.vlm_client import VlmConfig, VlmWorker, probe
+        vcfg = VlmConfig(endpoint=args.vlm_endpoint, model=args.vlm, timeout_s=args.vlm_timeout)
+        if not probe(vcfg):
+            print(f'VLM REQUESTED BUT NOT REACHABLE at {args.vlm_endpoint}: not starting (no fake decisions)')
+            return 3
+        worker = VlmWorker(vcfg)
+        print(f'VLM: {args.vlm} at {args.vlm_endpoint} (asynchronous worker)')
+        pp = sp.PlannerParams(inspect_min_observations=6, inspect_delay_s=2.0,
+                              inspect_dwell_s=45.0, inspect_timeout_s=400.0)
+    else:
+        pp = sp.PlannerParams()
+    planner = sp.SearchPlanner(area, sp.Camera(FX, FY, W, H), pp)
+    vlm = {'crops': {}, 'conf': {}, 'log': [], 'by_entity': {}, 'requests': {}, 'sent': 0}
+    vdir = os.path.join(args.out or os.path.join(ROOT, 'results', 'tmp_vlm'), 'vlm_crops')
+    tracker = Tracker()
+    chain = releaser = updepth = None
+    if args.debris:
+        from controllers.debris import DebrisChain, DebrisReleaser, UpDepth
+        updepth = UpDepth(sim.m, sim.d)
+        chain = DebrisChain(sim, updepth)
+        releaser = DebrisReleaser(sim, n=args.debris)
+    omap = OccupancyMap()
+    params = NavParams()
+    nav = Navigator(params)
+    nav_home = Navigator(params)
+
+    st = {'last_scan': -1.0, 'last_cam': -1.0, 'grid': None, 'grid_t': -9.0,
+          'carrot_xy': np.zeros(2), 'speed': 2.0, 'frames': 0, 'detections': 0,
+          'locations': [], 'goal': None, 'phase': 'TAKEOFF',
+          'skipped': [], 'unreach_since': None, 'min_range': 99.0}
+
+    def sense(s):
+        if s.t - st['last_scan'] >= 0.1:
+            st['last_scan'] = s.t
+            o, a, r = s.lidar()
+            omap.update(o, a, r)
+            st['min_range'] = min(st['min_range'], float(r.min()))
+        if st['phase'] == 'SEARCH' and s.t - st['last_cam'] >= 0.2:
+            st['last_cam'] = s.t
+            p, rot, v, _ = s.state()
+            pos, q = pose_ned_frd(p, rot)
+            frame = camera.frame_bgr()
+            cands = [c for c in sd.detect(frame)
+                     if c.confidence >= sd.DetectorParams().weak_confidence]
+            dets = tracker.update(cands)
+            if cands and st.get('shots', 0) < 6 and s.t - st.get('shot_t', -9) > 4.0:
+                # evidence: the camera frame with the detector's boxes
+                import cv2
+                img = frame.copy()
+                for c in cands:
+                    cv2.rectangle(img, (c.x, c.y), (c.x + c.width, c.y + c.height),
+                                  (0, 255, 0), 2)
+                    cv2.putText(img, f'candidate {c.confidence:.2f}', (c.x, max(c.y - 6, 12)),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+                cv2.putText(img, f't={s.t:.1f}s z={p[2]:.1f}m', (8, 20),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.55, (255, 255, 255), 1)
+                os.makedirs(os.path.join(ROOT, 'results', 'detections_tmp'), exist_ok=True)
+                st.setdefault('shot_list', []).append((s.t, img))
+                st['shots'] = st.get('shots', 0) + 1
+                st['shot_t'] = s.t
+            for d_ in dets:
+                u_, v_, w_, h_ = d_['center_u'], d_['center_v'], d_['bbox_width'], d_['bbox_height']
+                vlm['crops'][d_['track_id']] = (frame.copy(), (int(u_ - w_ / 2), int(v_ - h_ / 2), int(u_ + w_ / 2), int(v_ + h_ / 2)), s.t)
+                vlm['conf'][d_['track_id']] = d_['confidence']
+            st['frames'] += 1
+            st['detections'] += len(dets)
+            localizer.update(s.t, dets, (pos, q))
+            planner.observe(pos, q, 0.0)
+            if worker is not None:
+                for o_ in worker.poll():
+                    ctx = o_.context or {}
+                    rec = {'entity': ctx.get('entity'), 't_sim': round(s.t, 1), 'kind': o_.kind,
+                           'decision': o_.decision, 'vlm_confidence': o_.confidence,
+                           'description': o_.description, 'latency_s': round(o_.latency_s, 1),
+                           'detector_confidence': ctx.get('conf'), 'crop': ctx.get('file'), 'error': o_.error}
+                    vlm['log'].append(rec)
+                    print('VLM answer:', json.dumps(rec)[:260], flush=True)
+                    if o_.kind == 'answer':
+                        vlm['by_entity'].setdefault(ctx.get('entity'), []).append(rec)
+                g_ = st.get('goal')
+                if g_ is not None and g_.state == sp.STATE_INSPECTING and not worker.busy:
+                    ent = next((e for e in localizer.reported() if e.entity_id == g_.inspecting_id), None)
+                    tid = ent.last_track_id if ent is not None else None
+                    if ent is not None and tid in vlm['crops'] and vlm['requests'].get(ent.entity_id, 0) < 4 \
+                            and s.t - vlm['crops'][tid][2] < 1.0:
+                        frame_, bbox_, _ = vlm['crops'][tid]
+                        off = math.degrees(math.atan2(math.hypot(ent.position[0] - pos[0], ent.position[1] - pos[1]),
+                                                      max(-pos[2] - 0.9, 0.5)))
+                        bx0, by0, bx1, by1 = bbox_
+                        inside = bx0 >= 10 and by0 >= 10 and bx1 <= W - 10 and by1 <= H - 10
+                        if off >= 15.0 and inside:       # oblique and complete: the VLM fails on straight-down or clipped crops
+                            os.makedirs(vdir, exist_ok=True)
+                            fn = os.path.join(vdir, f'entity{ent.entity_id}_req{vlm["requests"].get(ent.entity_id, 0)}.png')
+                            x0_, y0_, x1_, y1_ = bbox_
+                            pad = 0.25 * max(x1_ - x0_, y1_ - y0_)
+                            import cv2
+                            cv2.imwrite(fn, frame_[max(int(y0_ - pad), 0):int(y1_ + pad), max(int(x0_ - pad), 0):int(x1_ + pad)])
+                            worker.submit(frame_, bbox_, {'entity': ent.entity_id, 'conf': vlm['conf'].get(tid), 'file': fn, 'off_nadir_deg': round(off, 1)})
+                            vlm['requests'][ent.entity_id] = vlm['requests'].get(ent.entity_id, 0) + 1
+                            vlm['sent'] += 1
+                            print(f'VLM request for entity {ent.entity_id} (off-nadir {off:.0f} deg, t={s.t:.1f})', flush=True)
+
+            def vlm_flags(eid):
+                rows = vlm['by_entity'].get(eid, [])
+                conf_ = any(r['decision'] == 'confirm' and (r['vlm_confidence'] or 0) >= 0.6 for r in rows)
+                rej_ = bool(rows) and rows[-1]['decision'] == 'reject' and not conf_
+                return conf_, rej_
+            st['locations'] = [{
+                'id': e.entity_id, 'ned': [float(x) for x in e.position],
+                'height': float(-e.position[2]), 'state': localizer.state_of(e),
+                'obs': e.observations, 'confirmed': vlm_flags(e.entity_id)[0],
+                'rejected': vlm_flags(e.entity_id)[1]}
+                for e in localizer.reported()]
+
+    def plan_to(s, nav_obj, goal_xy):
+        # the ROS navigator runs at 10 Hz; calling it every 4 ms control tick
+        # replans on every call whenever a goal has no route
+        if s.t - st.get('nav_t', -1.0) < 0.1 and st.get('nav_state'):
+            return st['nav_state']
+        st['nav_t'] = s.t
+        pos = s.state()[0][:2]
+        if st['grid'] is None or s.t - st['grid_t'] >= 0.5:
+            st['grid_t'] = s.t
+            st['grid'] = PlanningGrid(omap.grid_data(), omap.res, omap.origin,
+                                      [pos, goal_xy], params)
+        c, limit, state = nav_obj.update(s.t, st['grid'], pos,
+                                         np.array(goal_xy, float))
+        st['carrot_xy'] = np.array(c, float)
+        st['speed'] = params.near_obstacle_speed_m_s if limit is not None \
+            else 2.0
+        st['nav_state'] = state
+        return state
+
+    ok, carrot = takeoff(sim, ALT, hold=1.0)
+    st['phase'] = 'SEARCH'
+    yaw_ned = math.pi / 2.0 - sim.yaw()
+    p0 = sim.state()[0]
+    planner.start(sim.t, (p0[1], p0[0]), yaw_ned, ALT)
+    print(f'search: {len(planner.waypoints)} lane waypoints')
+    t_search0 = sim.t
+    timeline = [('TAKEOFF_DONE', sim.t)]
+    unreach = {'xy': None, 't': None}
+
+    def provider(s):
+        sense(s)
+        if worker is not None and worker.busy:
+            time.sleep(s.dt_ctrl)       # the VLM runs in wall time: do not let the sim race ahead
+        p = s.state()[0]
+        goal = planner.update(s.t, (p[1], p[0]), float(np.linalg.norm(
+            s.state()[2][:2])), st['locations'])
+        st['goal'] = goal
+        gx, gy = goal.target_ne[1], goal.target_ne[0]          # east, north
+        state = plan_to(s, nav, (gx, gy))
+        # a target the navigator cannot reach for 4 s is skipped
+        if state == 'UNREACHABLE':
+            if unreach['xy'] != (gx, gy):
+                unreach['xy'], unreach['t'] = (gx, gy), s.t
+            elif s.t - unreach['t'] > 4.0:
+                if planner.skip_current(s.t, goal.target_ne,
+                                        'no route on the map'):
+                    st['skipped'].append((round(gx, 1), round(gy, 1)))
+                unreach['xy'] = None
+        else:
+            unreach['xy'] = None
+        tgt = np.array([st['carrot_xy'][0], st['carrot_xy'][1], ALT])
+        # while inspecting a candidate, turn the nose (= image up) toward it so it stays in view
+        want = 0.0
+        if goal.state == sp.STATE_INSPECTING:
+            ent = next((e for e in st['locations'] if e['id'] == goal.inspecting_id), None)
+            if ent is not None:
+                want = math.atan2(ent['ned'][0] - p[1], ent['ned'][1] - p[0])
+        err = (want - st.get('yaw', 0.0) + math.pi) % (2 * math.pi) - math.pi
+        st['yaw'] = st.get('yaw', 0.0) + float(np.clip(err, -0.5 * s.dt_ctrl, 0.5 * s.dt_ctrl))
+        if chain is not None:
+            p_, rot_, v_, _ = s.state()
+            pos_, q_ = pose_ned_frd(p_, rot_)
+            v_ned = np.array([v_[1], v_[0], -v_[2]])
+            releaser.update(s.t - t_search0, p_, v_)
+            av = chain.step(s.t, pos_, q_, v_ned, np.array([tgt[1], tgt[0], -ALT]))
+            if av is not None:             # validated avoidance proposal: fly it directly
+                tgt_enu = np.array([av[1], av[0], -av[2]])
+                st['avoid_ticks'] = st.get('avoid_ticks', 0) + 1
+                dirv = tgt_enu - p_
+                nrm = float(np.linalg.norm(dirv))
+                carrot.p = p_.copy()       # the mission reference restarts from the vehicle afterwards
+                return Setpoint(tgt_enu, dirv / nrm * 3.0 if nrm > 1e-6 else np.zeros(3), st['yaw'])
+        return carrot.toward(s, tgt, st['speed'], yaw=st['yaw'])
+
+    def search_over(s):
+        g = st['goal']
+        return (g is not None and g.complete) or s.t - t_search0 > budget
+
+    sim.run(provider, search_over, budget + 30.0)
+    reason = ('search area covered' if st['goal'] and st['goal'].complete
+              else f'time budget of {budget:.0f} s used')
+    timeline.append(('SEARCH_END: ' + reason, sim.t))
+    st['phase'] = 'RETURN'
+    home = (0.0, 0.0)
+
+    def provider_home(s):
+        sense(s)
+        plan_to(s, nav_home, home)
+        tgt = np.array([st['carrot_xy'][0], st['carrot_xy'][1], ALT])
+        return carrot.toward(s, tgt, st['speed'])
+    back = sim.run(provider_home, lambda s: float(np.hypot(
+        *(s.state()[0][:2] - np.array(home)))) < 1.2, 300.0)
+    timeline.append(('RETURNED' if back else 'RETURN_FAILED', sim.t))
+    landed = land(sim, carrot, home)
+    timeline.append(('LANDED' if landed else 'LAND_FAILED', sim.t))
+
+    # 5. report; ground truth only here, for scoring
+    truth = json.load(open(os.path.join(ROOT, 'worlds', 'shapes',
+                                        f'{args.scene}.json')))
+    surv = [(s['name'], s['position']) for s in truth['survivors']]
+    objs = [(o['name'], o['position'][:2]) for o in truth['objects']]
+    def status_of(e):
+        if worker is None:
+            return 'UNVERIFIED_CANDIDATE (no VLM)'
+        rows = vlm['by_entity'].get(e.entity_id, [])
+        if any(r['decision'] == 'confirm' and (r['vlm_confidence'] or 0) >= 0.6 for r in rows):
+            return 'SURVIVOR_CONFIRMED (VLM)'
+        if rows and rows[-1]['decision'] == 'reject' and float(vlm['conf'].get(e.last_track_id, 1.0)) < 0.55:
+            return 'REJECTED_BY_VLM'
+        if rows:
+            return 'UNCERTAIN (VLM answered but did not confirm; detector cues strong)'
+        return ('UNVERIFIED_CANDIDATE (VLM asked, no answer)' if vlm['requests'].get(e.entity_id)
+                else 'UNVERIFIED_CANDIDATE (not inspected: no VLM request made)')
+    entries = []
+    for e in localizer.reported():
+        east, north = float(e.position[1]), float(e.position[0])
+        match = min(((n, math.hypot(east - x, north - y)) for n, (x, y) in surv),
+                    key=lambda t: t[1], default=(None, 1e9))
+        decoy = min(((n, math.hypot(east - x, north - y)) for n, (x, y) in objs),
+                    key=lambda t: t[1], default=(None, 1e9))
+        kind = 'survivor' if match[1] < 1.5 else \
+            'look-alike' if decoy[1] < 1.5 else 'unmatched'
+        entries.append({
+            'id': e.entity_id, 'east_m': round(east, 2), 'north_m': round(north, 2),
+            'sigma_m': round(e.horizontal_sigma(), 2), 'observations': e.observations,
+            'status': status_of(e),
+            'vlm_decisions': vlm['by_entity'].get(e.entity_id, []),
+            'detector_confidence': round(float(vlm['conf'].get(e.last_track_id, -1)), 2),
+            'scored_as': kind,
+            'error_to_nearest_survivor_m': round(match[1], 2) if match[0] else None,
+            'nearest_survivor': match[0]})
+    p_end = sim.state()[0]
+    found = {en['nearest_survivor'] for en in entries
+             if en['scored_as'] == 'survivor'}
+    report = {
+        'instruction': args.instruction, 'scene': args.scene,
+        'mission': mission, 'outcome': 'COMPLETE' if landed and back
+        else 'INCOMPLETE', 'search_end': reason,
+        'search_time_s': round(timeline[1][1] - t_search0, 1),
+        'coverage': round(planner.grid.fraction(), 3),
+        'waypoints_skipped_unreachable': st['skipped'],
+        'camera_frames': st['frames'], 'detections': st['detections'],
+        'survivors_in_scene': [n for n, _ in surv],
+        'survivors_found': sorted(found), 'entries': entries,
+        'false_candidates': [en['id'] for en in entries
+                             if en['scored_as'] != 'survivor'],
+        'collisions': [(round(c[0], 2), c[1]) for c in sim.collisions],
+        'min_lidar_range_m': round(st['min_range'], 2),
+        'returned_home': bool(back), 'landed': bool(landed),
+        'landing_offset_m': round(float(np.hypot(p_end[0], p_end[1])), 3),
+        'touchdown_speed_m_s': None if sim.touchdown_speed is None
+        else round(sim.touchdown_speed, 3),
+        'timeline': [(n, round(t, 1)) for n, t in timeline],
+        'debris': None if chain is None else {
+            'released': releaser.released,
+            'min_true_separation_to_uav_m (scoring only)': [round(x, 2) if x < 1e8 else None for x in releaser.min_sep],
+            'avoidance_manoeuvres': chain.planner.manoeuvres,
+            'avoidance_command_ticks': st.get('avoid_ticks', 0),
+            'depth_frames': chain.n_frames, 'detections': chain.n_detections,
+            'planner_transitions': chain.events, 'risk_log': chain.log[:200],
+            'sensor': 'rendered upward depth camera only; project DebrisDetector, DebrisTracker, risk.assess (ballistic), AvoidancePlanner, validate_command'},
+        'vlm': None if worker is None else {
+            'model': args.vlm, 'endpoint': args.vlm_endpoint, 'requests_sent': vlm['sent'],
+            'answers': sum(r['kind'] == 'answer' for r in vlm['log']),
+            'errors': sum(r['kind'] != 'answer' for r in vlm['log']),
+            'mean_latency_s': round(float(np.mean([r['latency_s'] for r in vlm['log']])), 1) if vlm['log'] else None,
+            'decisions': vlm['log']},
+        'labels': {'vehicle_pose': 'simulator state (NOT PX4, NOT SLAM)',
+                   'map': 'lidar with known pose (NOT SLAM)',
+                   'verification': 'none: no VLM, candidates unverified' if worker is None else f'VLM {args.vlm} via Ollama, real inference, asynchronous; decisions only from its answers',
+                   'detector': 'project HSV+shape baseline on rendered frames'}}
+    out = args.out or os.path.join(ROOT, 'results',
+                                   f'mission_{args.scene}_{time.strftime("%H%M%S")}')
+    os.makedirs(out, exist_ok=True)
+    json.dump(report, open(os.path.join(out, 'mission_report.json'), 'w'),
+              indent=1, default=str)
+    p_log = np.array(sim.log['p'])
+    np.savetxt(os.path.join(out, 'trajectory.csv'), np.column_stack(
+        [sim.log['t'], p_log]), delimiter=',', header='t,x,y,z', comments='')
+    for k, (ts, img) in enumerate(st.get('shot_list', [])):
+        import cv2
+        cv2.imwrite(os.path.join(out, f'detection_{k}_t{ts:.0f}.png'), img)
+    try:
+        os.rmdir(os.path.join(ROOT, 'results', 'detections_tmp'))
+    except OSError:
+        pass
+    if worker is not None:
+        worker.stop()
+    sim.close()                 # viewer first; then the offscreen renderers
+    camera.close()
+    if updepth is not None:
+        updepth.close()
+    sys.stdout.flush()
+    print(json.dumps({k: report[k] for k in (
+        'outcome', 'search_end', 'search_time_s', 'coverage',
+        'survivors_in_scene', 'survivors_found', 'false_candidates',
+        'collisions', 'landed')}, indent=1))
+    for en in entries:
+        print('  entry', en)
+    print('saved', out)
+    code = 0 if report['outcome'] == 'COMPLETE' and not sim.collisions else 1
+    # the GL contexts can crash Python's own teardown (exit 139 after the report was saved): leave directly
+    os._exit(code)
+
+
+if __name__ == '__main__':
+    sys.exit(main())

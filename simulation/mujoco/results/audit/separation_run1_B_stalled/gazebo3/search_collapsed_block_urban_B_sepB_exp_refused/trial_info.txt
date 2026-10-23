@@ -1,0 +1,1 @@
+scenario=mission mission=search_collapsed_block world=urban_B debris=0 kill_perception_at=none kill=none@none no_planner=0 vlm_endpoint=none vlm_model=none

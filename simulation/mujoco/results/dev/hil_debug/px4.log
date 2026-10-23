@@ -1,0 +1,58 @@
+
+______  __   __    ___ 
+| ___ \ \ \ / /   /   |
+| |_/ /  \ V /   / /| |
+|  __/   /   \  / /_| |
+| |     / /^\ \ \___  |
+\_|     \/   \/     |_/
+
+px4 starting.
+
+INFO  [px4] startup script: /bin/sh etc/init.d-posix/rcS 0
+env SYS_AUTOSTART: 10016
+INFO  [param] selected parameter default file parameters.bson
+INFO  [param] importing from 'parameters.bson'
+INFO  [parameters] BSON document size 436 bytes, decoded 436 bytes (INT32:18, FLOAT:4)
+INFO  [param] selected parameter backup file parameters_backup.bson
+INFO  [dataman] data manager file './dataman' size is 1208528 bytes
+INFO  [init] PX4_SIM_HOSTNAME: localhost
+INFO  [simulator_mavlink] Waiting for simulator to accept connection on TCP port 4560
+INFO  [simulator_mavlink] Simulator connected on TCP port 4560.
+INFO  [lockstep_scheduler] setting initial absolute time to 4000 us
+INFO  [commander] LED: open /dev/led0 failed (22)
+INFO  [vision_target_estimator] VTE for static target init
+INFO  [tone_alarm] home set
+INFO  [uxrce_dds_client] init UDP agent IP:127.0.0.1, port:8888
+INFO  [mavlink] mode: Normal, data rate: 4000000 B/s on udp port 18570 remote port 14550
+INFO  [mavlink] mode: Onboard, data rate: 4000000 B/s on udp port 14580 remote port 14540
+WARN  [health_and_arming_checks] Preflight Fail: no heading reference
+INFO  [mavlink] mode: Onboard, data rate: 4000 B/s on udp port 14280 remote port 14030
+INFO  [mavlink] mode: Gimbal, data rate: 400000 B/s on udp port 13030 remote port 13280
+INFO  [logger] logger started (mode=all)
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 4
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 5
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 6
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 7
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 8
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 9
+WARN  [logger] Too many subscriptions, failed to add: collision_constraints 0
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 4
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 5
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 6
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 7
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 8
+WARN  [logger] Too many subscriptions, failed to add: distance_sensor 9
+WARN  [logger] Too many subscriptions, failed to add: obstacle_distance_fused 0
+WARN  [logger] Too many subscriptions, failed to add: obstacle_distance 0
+WARN  [logger] Too many subscriptions, failed to add: vehicle_mocap_odometry 0
+INFO  [logger] Max log file size: 1024 MiB
+INFO  [logger] Start file log (type: full)
+INFO  [logger] [logger] ./log/2026-10-20/17_12_43.ulg	
+INFO  [logger] Opened full log file: ./log/2026-10-20/17_12_43.ulg
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [mavlink] MAVLink only on localhost (set param MAV_{i}_BROADCAST = 1 to enable network)
+INFO  [px4] Startup script returned successfully
+INFO  [commander] [32mReady for takeoff![0m
+
+PX4 Exiting...
+Exiting NOW.

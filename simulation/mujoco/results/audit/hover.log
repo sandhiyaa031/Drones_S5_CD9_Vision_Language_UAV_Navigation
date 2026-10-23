@@ -1,0 +1,11 @@
+{
+ "takeoff_reached": true,
+ "hold_altitude_rmse_m": 0.0094,
+ "hold_altitude_max_dev_m": 0.0238,
+ "hold_horizontal_drift_m": 0.0,
+ "landed": true,
+ "touchdown_speed_m_s": 0.34,
+ "landing_offset_m": 0.0,
+ "ground_contact": true
+}
+sim 36.5 s in 7.1 s wall; saved results/audit/hover

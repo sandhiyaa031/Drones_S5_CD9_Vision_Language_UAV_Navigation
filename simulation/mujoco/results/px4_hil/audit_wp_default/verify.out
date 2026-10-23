@@ -1,0 +1,49 @@
+{
+  "file": "/home/sandhiya/Desktop/drones/ros2_ws/simulation/mujoco/results/px4_hil/audit_wp_default/flight.ulg",
+  "mode": "waypoint",
+  "passed": true,
+  "checks": {
+    "armed": true,
+    "disarmed_after_flight": true,
+    "offboard_while_armed": true,
+    "takeoff_reached_target": true,
+    "waypoints_reached": true,
+    "landed": true,
+    "no_excursion": true,
+    "no_impact": true
+  },
+  "metrics": {
+    "armed_duration_s": 20.42,
+    "max_altitude_m": 3.119,
+    "takeoff_time_s": 5.99,
+    "longest_time_in_altitude_band_s": 7.53,
+    "hold_altitude_rmse_m": 0.147,
+    "hold_altitude_min_m": 2.65,
+    "hold_altitude_max_m": 3.119,
+    "waypoints": [
+      {
+        "north": -4.0,
+        "east": -4.0,
+        "closest_approach_m": 0.006,
+        "reached": true
+      },
+      {
+        "north": -4.0,
+        "east": -5.5,
+        "closest_approach_m": 0.127,
+        "reached": true
+      },
+      {
+        "north": 0.0,
+        "east": 0.0,
+        "closest_approach_m": 0.005,
+        "reached": true
+      }
+    ],
+    "final_altitude_m": -0.034,
+    "landing_horizontal_offset_m": 2.229,
+    "px4_landed_flag_at_end": true,
+    "max_horizontal_range_m": 6.836,
+    "max_airborne_horizontal_accel_m_s2": 6.77
+  }
+}

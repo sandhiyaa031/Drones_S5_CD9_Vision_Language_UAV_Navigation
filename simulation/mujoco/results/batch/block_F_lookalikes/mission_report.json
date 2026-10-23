@@ -1,0 +1,98 @@
+{
+ "instruction": "Search the collapsed apartment block for survivors, report survivor locations, and return to base.",
+ "scene": "urban_F",
+ "mission": {
+  "name": "search_collapsed_block",
+  "search_area": {
+   "north": [
+    44.0,
+    72.0
+   ],
+   "east": [
+    14.0,
+    27.0
+   ]
+  },
+  "altitude_m": 6.0,
+  "time_budget_s": 240.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0
+ },
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "search_time_s": 101.4,
+ "coverage": 1.0,
+ "waypoints_skipped_unreachable": [
+  [
+   25.7,
+   68.0
+  ]
+ ],
+ "camera_frames": 502,
+ "detections": 174,
+ "survivors_in_scene": [],
+ "survivors_found": [],
+ "entries": [
+  {
+   "id": 1,
+   "east_m": 23.82,
+   "north_m": 61.96,
+   "sigma_m": 0.06,
+   "observations": 82,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": null,
+   "nearest_survivor": null
+  },
+  {
+   "id": 2,
+   "east_m": 32.34,
+   "north_m": 40.76,
+   "sigma_m": 1.14,
+   "observations": 5,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": null,
+   "nearest_survivor": null
+  }
+ ],
+ "false_candidates": [
+  1,
+  2
+ ],
+ "collisions": [],
+ "min_lidar_range_m": 2.03,
+ "returned_home": true,
+ "landed": true,
+ "landing_offset_m": 0.098,
+ "touchdown_speed_m_s": 0.335,
+ "timeline": [
+  [
+   "TAKEOFF_DONE",
+   5.9
+  ],
+  [
+   "SEARCH_END: search area covered",
+   107.3
+  ],
+  [
+   "RETURNED",
+   143.5
+  ],
+  [
+   "LANDED",
+   154.2
+  ]
+ ],
+ "labels": {
+  "vehicle_pose": "simulator state (NOT PX4, NOT SLAM)",
+  "map": "lidar with known pose (NOT SLAM)",
+  "verification": "none: no VLM, candidates unverified",
+  "detector": "project HSV+shape baseline on rendered frames"
+ }
+}

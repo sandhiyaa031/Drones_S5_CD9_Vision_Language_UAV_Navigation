@@ -1,0 +1,49 @@
+{
+  "file": "/home/sandhiya/Desktop/drones/simulation/mujoco/results/px4_hil/hilwp1/flight.ulg",
+  "mode": "waypoint",
+  "passed": true,
+  "checks": {
+    "armed": true,
+    "disarmed_after_flight": true,
+    "offboard_while_armed": true,
+    "takeoff_reached_target": true,
+    "waypoints_reached": true,
+    "landed": true,
+    "no_excursion": true,
+    "no_impact": true
+  },
+  "metrics": {
+    "armed_duration_s": 20.8,
+    "max_altitude_m": 3.124,
+    "takeoff_time_s": 6.07,
+    "longest_time_in_altitude_band_s": 7.72,
+    "hold_altitude_rmse_m": 0.1444,
+    "hold_altitude_min_m": 2.651,
+    "hold_altitude_max_m": 3.124,
+    "waypoints": [
+      {
+        "north": -4.0,
+        "east": -4.0,
+        "closest_approach_m": 0.004,
+        "reached": true
+      },
+      {
+        "north": -4.0,
+        "east": -5.5,
+        "closest_approach_m": 0.176,
+        "reached": true
+      },
+      {
+        "north": 0.0,
+        "east": 0.0,
+        "closest_approach_m": 0.004,
+        "reached": true
+      }
+    ],
+    "final_altitude_m": -0.065,
+    "landing_horizontal_offset_m": 2.14,
+    "px4_landed_flag_at_end": true,
+    "max_horizontal_range_m": 6.758,
+    "max_airborne_horizontal_accel_m_s2": 6.78
+  }
+}

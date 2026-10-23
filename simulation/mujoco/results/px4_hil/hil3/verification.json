@@ -1,0 +1,30 @@
+{
+  "file": "/home/sandhiya/Desktop/drones/simulation/mujoco/results/px4_hil/hil3/flight.ulg",
+  "mode": "hover",
+  "passed": true,
+  "checks": {
+    "armed": true,
+    "disarmed_after_flight": true,
+    "offboard_while_armed": true,
+    "takeoff_reached_target": true,
+    "altitude_hold": true,
+    "landed": true,
+    "no_excursion": true,
+    "no_impact": true
+  },
+  "metrics": {
+    "armed_duration_s": 94.01,
+    "max_altitude_m": 3.001,
+    "takeoff_time_s": 5.97,
+    "longest_time_in_altitude_band_s": 81.19,
+    "hold_altitude_rmse_m": 0.0437,
+    "hold_altitude_min_m": 2.651,
+    "hold_altitude_max_m": 3.001,
+    "hold_max_horizontal_drift_m": 0.017,
+    "final_altitude_m": 0.077,
+    "landing_horizontal_offset_m": 0.011,
+    "px4_landed_flag_at_end": true,
+    "max_horizontal_range_m": 0.014,
+    "max_airborne_horizontal_accel_m_s2": 0.05
+  }
+}

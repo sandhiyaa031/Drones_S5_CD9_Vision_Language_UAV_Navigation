@@ -1,0 +1,11 @@
+processes at start: []
+A: Gazebo flight in SEARCH, processes [      1 flight_controll       1 MicroXRCEAgent       1 px4       1 ruby ]
+A: MuJoCo PX4 trial exit code 3 (expected 3): [trial] REFUSING TO START: simulation processes are running: 19662 19812 19813 19814 20498 
+A: Gazebo processes after the refused attempt [      1 flight_controll       1 MicroXRCEAgent       1 px4       1 ruby ]
+A: Gazebo outcome: outcome COMPLETE | PX4 log checks: True
+A: processes after the flight []
+B: MuJoCo PX4 trial running, processes [      1 flight_controll       1 MicroXRCEAgent       1 px4 ]
+B: Gazebo mission exit code 0 (expected 3): 
+B: MuJoCo trial: [trial] controller outcome: NO_OUTCOME | PX4 log checks: False
+B: processes at the end []
+SEPARATION_CHECK_DONE

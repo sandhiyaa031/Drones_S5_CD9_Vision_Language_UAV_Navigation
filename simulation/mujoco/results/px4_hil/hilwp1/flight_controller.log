@@ -1,0 +1,45 @@
+[INFO] [1792516704.169215237] [flight_controller]: Flight controller ready; waiting for live PX4 telemetry. telemetry_only=False, waypoint_mission=True. Sequence: Offboard -> arm -> 3 m -> waypoint 1 -> waypoint 2 -> return -> land.
+[INFO] [1792516704.181228007] [flight_controller]: PRESTREAM: streaming current-position hold setpoints before mode change
+[INFO] [1792516705.730661336] [flight_controller]: REQUEST_OFFBOARD: prestream complete; requesting Offboard
+[INFO] [1792516705.780338342] [flight_controller]: Sent command 176 (attempt 1/4)
+[INFO] [1792516705.784951809] [flight_controller]: Command 176 ACK: ACCEPTED
+[INFO] [1792516705.830213173] [flight_controller]: WAIT_PREFLIGHT: PX4 reports Offboard; waiting for preflight pass
+[INFO] [1792516705.880245224] [flight_controller]: REQUEST_ARM: preflight checks pass; requesting arm
+[INFO] [1792516707.780665158] [flight_controller]: Sent command 400 (attempt 1/4)
+[INFO] [1792516707.784008697] [flight_controller]: Command 400 ACK: ACCEPTED
+[INFO] [1792516707.830088459] [flight_controller]: TAKEOFF: PX4 status confirms armed and Offboard
+[INFO] [1792516707.880984430] [flight_controller]: Takeoff target: NED z=-2.99 m (3.00 m above start)
+[INFO] [1792516707.882151350] [flight_controller]: Takeoff altitude: 0.01 m
+[INFO] [1792516708.930879151] [flight_controller]: Takeoff altitude: 0.02 m
+[INFO] [1792516709.931425455] [flight_controller]: Takeoff altitude: 2.66 m
+[INFO] [1792516710.181910095] [flight_controller]: WAYPOINT_1: takeoff verified at 2.76 m; proceeding to waypoint 1 (-4.0, -4.0) NED
+[INFO] [1792516710.231547317] [flight_controller]: WAYPOINT_1: horizontal error 5.65 m; altitude 2.78 m
+[INFO] [1792516710.881796343] [flight_controller]: WAYPOINT_2: waypoint 1 reached; proceeding to waypoint 2 (-4.0, -5.5) NED
+[INFO] [1792516711.232447559] [flight_controller]: WAYPOINT_2: horizontal error 0.85 m; altitude 2.91 m
+[INFO] [1792516711.432826511] [flight_controller]: RETURN_HOME: waypoint 2 reached; returning to takeoff point (0.0, -0.0) NED
+[INFO] [1792516712.232405955] [flight_controller]: REQUEST_LAND: home reached at altitude 2.95 m; requesting AUTO LAND
+[INFO] [1792516712.280769608] [flight_controller]: Sent command 21 (attempt 1/4)
+[INFO] [1792516712.283947892] [flight_controller]: Command 21 ACK: ACCEPTED
+[INFO] [1792516712.330624916] [flight_controller]: LANDING: PX4 accepted NAV_LAND; verifying landed state
+[INFO] [1792516715.129970407] [flight_controller]: COMPLETE: PX4 reports landed and disarmed
+[INFO] [1792516715.132292638] [flight_controller]: FLIGHT COMPLETE; final relative altitude -0.06 m
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/uav_autonomy/flight_controller", line 33, in <module>
+    sys.exit(load_entry_point('uav-autonomy==0.0.0', 'console_scripts', 'flight_controller')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/python3.12/site-packages/uav_autonomy/flight_controller.py", line 1127, in main
+    rclpy.spin(node)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+    executor.spin_once()
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[ros2run]: Process exited with failure 1

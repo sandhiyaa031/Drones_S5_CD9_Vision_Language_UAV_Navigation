@@ -1,0 +1,24 @@
+[bridge] waiting for PX4 on tcp 4560
+[bridge] PX4 connected from ('127.0.0.1', 59606)
+[bridge] sim   10.4 s  wall    4.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   20.4 s  wall    7.8 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   30.4 s  wall   11.3 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   40.4 s  wall   15.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   50.4 s  wall   19.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   60.4 s  wall   22.7 s  pos [-0.    0.    0.31]  armed True
+[bridge] sim   70.4 s  wall   26.7 s  pos [-0.01  0.01  3.15]  armed True
+[bridge] sim   80.4 s  wall   30.8 s  pos [-0.01  0.01  3.15]  armed True
+[bridge] sim   90.4 s  wall   34.8 s  pos [-0.01  0.    3.16]  armed True
+[bridge] sim  100.4 s  wall   38.8 s  pos [ 0.01 -0.01  3.15]  armed True
+[bridge] sim  110.4 s  wall   43.4 s  pos [0.01 0.   3.16]  armed True
+[bridge] sim  120.4 s  wall   47.3 s  pos [-0.01  0.01  3.14]  armed True
+[bridge] sim  130.4 s  wall   51.7 s  pos [-0.01 -0.02  3.15]  armed True
+[bridge] sim  140.4 s  wall   55.7 s  pos [-0.01  0.    0.99]  armed True
+[bridge] sim  150.4 s  wall   59.7 s  pos [-0.01  0.02  0.16]  armed False
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/simulation/mujoco/scripts/px4_hil_bridge.py", line 219, in <module>
+    main()
+  File "/home/sandhiya/Desktop/drones/ros2_ws/simulation/mujoco/scripts/px4_hil_bridge.py", line 162, in main
+    data = conn.recv(65536)
+           ^^^^^^^^^^^^^^^^
+ConnectionResetError: [Errno 104] Connection reset by peer

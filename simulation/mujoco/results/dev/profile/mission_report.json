@@ -1,0 +1,69 @@
+{
+ "instruction": "Search the collapsed apartment block for survivors, report survivor locations, and return to base.",
+ "scene": "urban_B",
+ "mission": {
+  "name": "search_collapsed_block",
+  "search_area": {
+   "north": [
+    44.0,
+    72.0
+   ],
+   "east": [
+    -12.0,
+    26.0
+   ]
+  },
+  "altitude_m": 6.0,
+  "time_budget_s": 300.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0
+ },
+ "outcome": "COMPLETE",
+ "search_end": "time budget of 12 s used",
+ "search_time_s": 12.0,
+ "coverage": 0.0,
+ "waypoints_skipped_unreachable": [],
+ "camera_frames": 60,
+ "detections": 0,
+ "survivors_in_scene": [
+  "survivor_block"
+ ],
+ "survivors_found": [],
+ "entries": [],
+ "false_candidates": [],
+ "collisions": [],
+ "min_lidar_range_m": 14.09,
+ "returned_home": true,
+ "landed": true,
+ "landing_offset_m": 0.089,
+ "touchdown_speed_m_s": 0.334,
+ "timeline": [
+  [
+   "TAKEOFF_DONE",
+   5.9
+  ],
+  [
+   "SEARCH_END: time budget of 12 s used",
+   17.9
+  ],
+  [
+   "RETURNED",
+   29.7
+  ],
+  [
+   "LANDED",
+   40.5
+  ]
+ ],
+ "labels": {
+  "vehicle_pose": "simulator state (NOT PX4, NOT SLAM)",
+  "map": "lidar with known pose (NOT SLAM)",
+  "verification": "none: no VLM, candidates unverified",
+  "detector": "project HSV+shape baseline on rendered frames"
+ }
+}

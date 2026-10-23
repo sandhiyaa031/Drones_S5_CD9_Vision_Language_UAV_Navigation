@@ -1,0 +1,75 @@
+recording to /home/sandhiya/Desktop/drones/ros2_ws/simulation/mujoco/results/audit/separation/gazebo/search_collapsed_block_urban_B_sepA for 500 s
+frames=0 pose_messages=11294
+status frames=2381 detection arrays=2374 debug images=791
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_slam.py", line 135, in <module>
+    main()
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_slam.py", line 122, in main
+    rclpy.spin_once(node, timeout_sec=0.2)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 226, in spin_once
+    executor.spin_once(timeout_sec=timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_search.py", line 85, in <module>
+    main()
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_search.py", line 77, in main
+    rclpy.spin_once(node, timeout_sec=0.2)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 226, in spin_once
+    executor.spin_once(timeout_sec=timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+Traceback (most recent call last):
+    handler, entity, node = self.wait_for_ready_callbacks(
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_mission.py", line 80, in <module>
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    main()
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_mission.py", line 72, in main
+    return next(self._cb_iter)
+    rclpy.spin_once(node, timeout_sec=0.2)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 226, in spin_once
+    raise ExternalShutdownException()
+    executor.spin_once(timeout_sec=timeout_sec)
+rclpy.executors.ExternalShutdownException
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_locations.py", line 75, in <module>
+    main()
+  File "/home/sandhiya/Desktop/drones/ros2_ws/scripts/perception/log_locations.py", line 66, in main
+    rclpy.spin_once(node, timeout_sec=0.2)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 226, in spin_once
+    executor.spin_once(timeout_sec=timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException

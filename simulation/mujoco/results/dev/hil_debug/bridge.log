@@ -1,0 +1,19 @@
+[bridge] waiting for PX4 on tcp 4560
+[bridge] PX4 connected from ('127.0.0.1', 36594)
+[bridge] sim   10.3 s  wall    4.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   20.3 s  wall    8.1 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   30.3 s  wall   11.8 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   40.3 s  wall   15.6 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   50.3 s  wall   19.5 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   60.3 s  wall   23.3 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   70.3 s  wall   27.1 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   80.3 s  wall   31.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim   90.3 s  wall   35.2 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  100.3 s  wall   38.9 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  110.3 s  wall   42.9 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  120.3 s  wall   46.4 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  130.3 s  wall   50.3 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  140.3 s  wall   53.9 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  150.3 s  wall   57.5 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  160.3 s  wall   61.0 s  pos [0.   0.   0.16]  armed False
+[bridge] sim  170.3 s  wall   64.4 s  pos [0.   0.   0.16]  armed False

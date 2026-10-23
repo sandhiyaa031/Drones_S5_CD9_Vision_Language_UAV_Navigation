@@ -1,0 +1,47 @@
+<!-- Quadrotor for the PX4 hardware-in-the-loop (HIL) bridge.
+     It matches the parameters of PX4 airframe 10016_none_iris, the only
+     airframe of this PX4 build that uses the MAVLink simulator interface
+     (4001_gz_x500 enables the Gazebo bridge): mass 1.5 kg, inertia
+     (0.029125, 0.029125, 0.055225), rotors CA_ROTOR0..3 at FRD
+     (0.1515, 0.245), (-0.1515, -0.1875), (0.1515, -0.245), (-0.1515, 0.1875),
+     KM +0.05, +0.05, -0.05, -0.05, thrust linear in the PX4 output
+     (THR_MDL_FAC 0) with hover at 50 % = 3.68 N per rotor (max 7.36 N).
+     Body frame FLU, so the FRD rotor y is negated. Thrust and reaction
+     torque act through site motors; the vehicle moves by physics only. -->
+<mujoco>
+  <worldbody>
+    <body name="uav" pos="0 0 0.16">
+      <freejoint name="root"/>
+      <inertial pos="0 0 0" mass="1.5" diaginertia="0.029125 0.029125 0.055225"/>
+      <geom name="uav_body" type="box" size="0.12 0.10 0.045" rgba="0.15 0.15 0.17 1" contype="2" conaffinity="1"/>
+      <geom name="arm0" type="capsule" fromto="0 0 0 0.1515 -0.245 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm1" type="capsule" fromto="0 0 0 -0.1515 0.1875 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm2" type="capsule" fromto="0 0 0 0.1515 0.245 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm3" type="capsule" fromto="0 0 0 -0.1515 -0.1875 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="leg0" type="capsule" fromto="0.10 0.09 -0.03 0.115 0.10 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg1" type="capsule" fromto="0.10 -0.09 -0.03 0.115 -0.10 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg2" type="capsule" fromto="-0.10 0.09 -0.03 -0.115 0.10 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg3" type="capsule" fromto="-0.10 -0.09 -0.03 -0.115 -0.10 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="nose" type="box" pos="0.14 0 0" size="0.02 0.03 0.02" rgba="0.9 0.3 0.05 1" contype="0" conaffinity="0"/>
+      <site name="r0" pos="0.1515 -0.245 0.03" size="0.01"/>
+      <site name="r1" pos="-0.1515 0.1875 0.03" size="0.01"/>
+      <site name="r2" pos="0.1515 0.245 0.03" size="0.01"/>
+      <site name="r3" pos="-0.1515 -0.1875 0.03" size="0.01"/>
+      <site name="lidar" pos="0 0 0.1" size="0.01"/>
+      <site name="imu" pos="0 0 0" size="0.01"/>
+      <camera name="down" pos="0 0 -0.14" xyaxes="0 -1 0 1 0 0" fovy="73"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <!-- KM x 1 N thrust = 0.05 N m reaction torque; sign: FRD KM > 0 is a
+         clockwise (from above) rotor = negative torque about FLU up -->
+    <motor name="m0" site="r0" gear="0 0 1 0 0 -0.05" ctrlrange="0 7.36"/>
+    <motor name="m1" site="r1" gear="0 0 1 0 0 -0.05" ctrlrange="0 7.36"/>
+    <motor name="m2" site="r2" gear="0 0 1 0 0  0.05" ctrlrange="0 7.36"/>
+    <motor name="m3" site="r3" gear="0 0 1 0 0  0.05" ctrlrange="0 7.36"/>
+  </actuator>
+  <sensor>
+    <accelerometer name="imu_acc" site="imu"/>
+    <gyro name="imu_gyro" site="imu"/>
+  </sensor>
+</mujoco>

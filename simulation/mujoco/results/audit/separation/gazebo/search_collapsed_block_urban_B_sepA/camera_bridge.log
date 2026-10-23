@@ -1,0 +1,8 @@
+[INFO] [1792522557.771873152] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/image (gz.msgs.Image) -> /camera/image_raw (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1792522557.776454902] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1792522557.777622565] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/depth_up/image (gz.msgs.Image) -> /depth_up/image_raw (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1792522557.778238196] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/depth_up/camera_info (gz.msgs.CameraInfo) -> /depth_up/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1792522557.778746766] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/scan (gz.msgs.LaserScan) -> /uav/scan_raw (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[INFO] [1792522557.779614896] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[WARN] [1792522557.781746412] [ros_gz_bridge]: New subscription discovered on topic '/clock', requesting incompatible QoS. No messages will be sent to it. Last incompatible policy: DURABILITY_QOS_POLICY
+[INFO] [1792522796.147733831] [rclcpp]: signal_handler(SIGINT/SIGTERM)

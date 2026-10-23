@@ -1,0 +1,9 @@
+date=2026-10-21T00:25:38+05:30
+mode=hover world=collapsed_building_rescue model=gz_x500_mono_cam_down project_model=x500_rescue uav_name=x500_rescue_0 headless=1 nvidia_offload=0
+px4_commit=d983b6424f3341b1e402f15d4127731c7de8e974
+ws_commit=fefad310a510059a9d46c0823c7b1d09a8feec78
+px4_extra_params=none
+uxrce_dds_synct=0
+controller_outcome=COMPLETE
+ulog_verification_exit=0
+scenario=mission mission=search_collapsed_block world=urban_B debris=0 kill_perception_at=none kill=none@none no_planner=0 vlm_endpoint=none vlm_model=none

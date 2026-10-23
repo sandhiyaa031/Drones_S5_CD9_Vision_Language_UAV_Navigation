@@ -1,0 +1,65 @@
+=== block_B (urban_B)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [
+ "false_candidates": [],
+ "collisions": [],
+ "landed": true
+  entry {'id': 1, 'east_m': 16.74, 'north_m': 55.14, 'sigma_m': 0.2, 'observations': 11, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.3, 'nearest_survivor': 'survivor_block'}
+=== courtyard_B2 (urban_B2)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [
+ "false_candidates": [],
+ "collisions": [],
+ "landed": true
+  entry {'id': 1, 'east_m': 57.32, 'north_m': 16.14, 'sigma_m': 0.08, 'observations': 59, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.23, 'nearest_survivor': 'survivor_court
+  entry {'id': 2, 'east_m': 58.04, 'north_m': 15.79, 'sigma_m': 0.17, 'observations': 5, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.57, 'nearest_survivor': 'survivor_courty
+=== block_D_occluded (urban_D)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [
+ "false_candidates": [],
+ "collisions": [],
+ "landed": true
+  entry {'id': 1, 'east_m': 16.65, 'north_m': 55.01, 'sigma_m': 0.26, 'observations': 9, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.35, 'nearest_survivor': 'survivor_block'
+=== block_F_lookalikes (urban_F)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [],
+ "false_candidates": [
+ "collisions": [],
+ "landed": true
+  entry {'id': 1, 'east_m': 23.82, 'north_m': 61.96, 'sigma_m': 0.06, 'observations': 82, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': None, 'nearest_survivor': None}
+  entry {'id': 2, 'east_m': 32.34, 'north_m': 40.76, 'sigma_m': 1.14, 'observations': 5, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': None, 'nearest_survivor': None}
+=== zone_C_headline (urban_C)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [
+ "false_candidates": [
+ "collisions": [],
+ "landed": true
+  entry {'id': 2, 'east_m': 16.81, 'north_m': 55.07, 'sigma_m': 0.19, 'observations': 12, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.21, 'nearest_survivor': 'survivor_block
+  entry {'id': 3, 'east_m': 23.0, 'north_m': 29.01, 'sigma_m': 0.06, 'observations': 67, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': 23.19, 'nearest_survivor': 'survivor_fro
+  entry {'id': 4, 'east_m': 23.89, 'north_m': 61.88, 'sigma_m': 0.07, 'observations': 85, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': 9.74, 'nearest_survivor': 'survivor_blo
+  entry {'id': 5, 'east_m': 33.0, 'north_m': 40.0, 'sigma_m': 0.03, 'observations': 142, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': 9.02, 'nearest_survivor': 'survivor_fron
+  entry {'id': 6, 'east_m': 41.08, 'north_m': 36.0, 'sigma_m': 0.04, 'observations': 115, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': 7.01, 'nearest_survivor': 'survivor_fro
+  entry {'id': 7, 'east_m': 41.26, 'north_m': 42.62, 'sigma_m': 0.21, 'observations': 9, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.45, 'nearest_survivor': 'survivor_front'
+  entry {'id': 8, 'east_m': 41.79, 'north_m': 43.29, 'sigma_m': 0.17, 'observations': 8, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.41, 'nearest_survivor': 'survivor_front'
+=== courtyard_C (urban_C)
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "coverage": 1.0,
+ "survivors_found": [
+ "false_candidates": [
+ "collisions": [],
+ "landed": true
+  entry {'id': 1, 'east_m': 57.32, 'north_m': 16.14, 'sigma_m': 0.08, 'observations': 59, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.23, 'nearest_survivor': 'survivor_court
+  entry {'id': 2, 'east_m': 57.91, 'north_m': 15.8, 'sigma_m': 0.12, 'observations': 6, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'survivor', 'error_to_nearest_survivor_m': 0.46, 'nearest_survivor': 'survivor_courtya
+  entry {'id': 5, 'east_m': 66.01, 'north_m': 17.0, 'sigma_m': 0.11, 'observations': 52, 'status': 'UNVERIFIED_CANDIDATE (no VLM)', 'scored_as': 'look-alike', 'error_to_nearest_survivor_m': 8.57, 'nearest_survivor': 'survivor_cour
+MUJOCO_BATCH_DONE

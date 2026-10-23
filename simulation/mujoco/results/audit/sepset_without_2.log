@@ -1,0 +1,8 @@
+[trial] MuJoCo HIL bridge
+[trial] PX4 (10016_none_iris)
+[trial] flight_controller (hover at 3.0 m)
+[trial] controller outcome: COMPLETE
+    "max_airborne_horizontal_accel_m_s2": 0.06
+  }
+}
+scripts/run_px4_mujoco_trial.sh: line 35: 28519 Killed                  MicroXRCEAgent udp4 -p 8888 > "$RUN_DIR/xrce_agent.log" 2>&1

@@ -1,0 +1,152 @@
+[INFO] [1792522562.402838056] [flight_controller]: Flight controller ready; waiting for live PX4 telemetry. telemetry_only=False, waypoint_mission=False. Sequence: Offboard -> arm -> takeoff -> search goals -> return -> land.
+[WARN] [1792522562.405069530] [flight_controller]: Waiting for PX4 telemetry: position_received=False, status_received=False, position_valid=False, position_age=4660.3s, status_age=4660.3s
+[INFO] [1792522563.155181016] [flight_controller]: Telemetry ready; waiting on the ground for the mission manager's START command
+[INFO] [1792522566.905031537] [flight_controller]: MISSION command START accepted in WAIT_FOR_DATA: preflight checks passed
+[INFO] [1792522566.905807148] [flight_controller]: PRESTREAM: streaming current-position hold setpoints before mode change
+[INFO] [1792522568.454601737] [flight_controller]: REQUEST_OFFBOARD: prestream complete; requesting Offboard
+[INFO] [1792522568.505015712] [flight_controller]: Sent command 176 (attempt 1/4)
+[INFO] [1792522568.524402554] [flight_controller]: Command 176 ACK: ACCEPTED
+[INFO] [1792522568.704588581] [flight_controller]: WAIT_PREFLIGHT: PX4 reports Offboard; waiting for preflight pass
+[INFO] [1792522568.755363794] [flight_controller]: REQUEST_ARM: preflight checks pass; requesting arm
+[INFO] [1792522570.505810937] [flight_controller]: Sent command 400 (attempt 1/4)
+[INFO] [1792522570.527419167] [flight_controller]: Command 400 ACK: ACCEPTED
+[INFO] [1792522570.555739748] [flight_controller]: TAKEOFF: PX4 status confirms armed and Offboard
+[INFO] [1792522570.607011324] [flight_controller]: Takeoff target: NED z=-6.02 m (6.00 m above start)
+[INFO] [1792522570.609574258] [flight_controller]: Takeoff altitude: 0.04 m
+[INFO] [1792522571.655586478] [flight_controller]: Takeoff altitude: 0.04 m
+[INFO] [1792522572.655952082] [flight_controller]: Takeoff altitude: 0.04 m
+[INFO] [1792522573.656956852] [flight_controller]: Takeoff altitude: 0.04 m
+[INFO] [1792522574.705271320] [flight_controller]: Takeoff altitude: 0.03 m
+[INFO] [1792522575.706202677] [flight_controller]: Takeoff altitude: 0.64 m
+[INFO] [1792522576.706543583] [flight_controller]: Takeoff altitude: 2.34 m
+[INFO] [1792522577.756816971] [flight_controller]: Takeoff altitude: 4.24 m
+[INFO] [1792522578.805734705] [flight_controller]: Takeoff altitude: 5.06 m
+[INFO] [1792522579.807025203] [flight_controller]: Takeoff altitude: 5.41 m
+[INFO] [1792522580.856398879] [flight_controller]: Takeoff altitude: 5.63 m
+[INFO] [1792522581.806525560] [flight_controller]: SEARCH: takeoff verified at 5.75 m; holding until the search planner sends a valid goal
+[INFO] [1792522581.856948209] [flight_controller]: SEARCH: goal (-0.0, -0.0) cap 2.0 m/s; altitude 5.76 m; goals accepted 0
+[INFO] [1792522583.857765345] [flight_controller]: SEARCH: goal (4.2, 1.3) cap 2.0 m/s; altitude 5.89 m; goals accepted 10
+[INFO] [1792522585.908942151] [flight_controller]: SEARCH: goal (7.0, 2.1) cap 2.0 m/s; altitude 5.95 m; goals accepted 24
+[INFO] [1792522587.956830010] [flight_controller]: SEARCH: goal (10.0, 3.0) cap 2.0 m/s; altitude 5.98 m; goals accepted 40
+[INFO] [1792522589.957314689] [flight_controller]: SEARCH: goal (12.9, 3.9) cap 2.0 m/s; altitude 6.00 m; goals accepted 54
+[INFO] [1792522591.958329502] [flight_controller]: SEARCH: goal (15.7, 4.8) cap 2.0 m/s; altitude 6.00 m; goals accepted 68
+[INFO] [1792522594.007239103] [flight_controller]: SEARCH: goal (18.8, 5.8) cap 2.0 m/s; altitude 6.00 m; goals accepted 84
+[INFO] [1792522596.007256473] [flight_controller]: SEARCH: goal (21.8, 6.8) cap 2.0 m/s; altitude 6.01 m; goals accepted 100
+[INFO] [1792522598.057398233] [flight_controller]: SEARCH: goal (24.8, 7.7) cap 2.0 m/s; altitude 6.00 m; goals accepted 116
+[INFO] [1792522600.057608689] [flight_controller]: SEARCH: goal (27.7, 8.7) cap 2.0 m/s; altitude 5.99 m; goals accepted 132
+[INFO] [1792522602.058312278] [flight_controller]: SEARCH: goal (30.5, 9.6) cap 2.0 m/s; altitude 6.01 m; goals accepted 147
+[INFO] [1792522604.107237912] [flight_controller]: SEARCH: goal (33.4, 10.5) cap 2.0 m/s; altitude 5.99 m; goals accepted 163
+[INFO] [1792522606.107781478] [flight_controller]: SEARCH: goal (36.2, 11.4) cap 2.0 m/s; altitude 6.00 m; goals accepted 178
+[INFO] [1792522608.107875421] [flight_controller]: SEARCH: goal (39.0, 12.3) cap 2.0 m/s; altitude 6.02 m; goals accepted 193
+[INFO] [1792522610.156981388] [flight_controller]: SEARCH: goal (41.8, 13.2) cap 2.0 m/s; altitude 5.99 m; goals accepted 208
+[INFO] [1792522612.159017775] [flight_controller]: SEARCH: goal (44.5, 14.0) cap 2.0 m/s; altitude 5.99 m; goals accepted 223
+[INFO] [1792522614.208636245] [flight_controller]: SEARCH: goal (47.3, 14.9) cap 2.0 m/s; altitude 5.99 m; goals accepted 238
+[INFO] [1792522616.257271499] [flight_controller]: SEARCH: goal (48.3, 15.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 254
+[INFO] [1792522618.257393336] [flight_controller]: SEARCH: goal (52.5, 15.4) cap 2.0 m/s; altitude 6.00 m; goals accepted 269
+[INFO] [1792522620.257418625] [flight_controller]: SEARCH: goal (55.4, 15.5) cap 2.0 m/s; altitude 6.01 m; goals accepted 284
+[INFO] [1792522622.308114431] [flight_controller]: SEARCH: goal (58.2, 15.5) cap 2.0 m/s; altitude 5.99 m; goals accepted 299
+[INFO] [1792522624.358869107] [flight_controller]: SEARCH: goal (61.3, 15.5) cap 2.0 m/s; altitude 5.99 m; goals accepted 315
+[INFO] [1792522626.406288045] [flight_controller]: SEARCH: goal (57.3, 16.2) cap 1.5 m/s; altitude 6.06 m; goals accepted 328
+[INFO] [1792522628.407863306] [flight_controller]: SEARCH: goal (57.3, 16.2) cap 1.5 m/s; altitude 5.99 m; goals accepted 340
+[INFO] [1792522630.408579094] [flight_controller]: SEARCH: goal (57.3, 16.2) cap 1.5 m/s; altitude 5.98 m; goals accepted 355
+[INFO] [1792522632.458072686] [flight_controller]: SEARCH: goal (57.3, 16.2) cap 1.5 m/s; altitude 6.00 m; goals accepted 366
+[INFO] [1792522634.507473506] [flight_controller]: SEARCH: goal (57.3, 16.2) cap 1.5 m/s; altitude 6.01 m; goals accepted 377
+[INFO] [1792522636.508052189] [flight_controller]: SEARCH: goal (56.0, 19.4) cap 1.5 m/s; altitude 6.01 m; goals accepted 390
+[INFO] [1792522638.557770265] [flight_controller]: SEARCH: goal (55.9, 19.3) cap 1.5 m/s; altitude 6.00 m; goals accepted 402
+[INFO] [1792522640.557842766] [flight_controller]: SEARCH: goal (55.9, 19.3) cap 1.5 m/s; altitude 5.98 m; goals accepted 416
+[INFO] [1792522642.608266039] [flight_controller]: SEARCH: goal (55.9, 19.3) cap 1.5 m/s; altitude 6.01 m; goals accepted 424
+[INFO] [1792522644.658076444] [flight_controller]: SEARCH: goal (55.9, 19.3) cap 1.5 m/s; altitude 6.00 m; goals accepted 435
+[INFO] [1792522646.706956217] [flight_controller]: SEARCH: goal (60.2, 17.8) cap 2.0 m/s; altitude 6.01 m; goals accepted 448
+[INFO] [1792522648.707852025] [flight_controller]: SEARCH: goal (62.9, 16.8) cap 2.0 m/s; altitude 5.99 m; goals accepted 463
+[INFO] [1792522650.708940371] [flight_controller]: SEARCH: goal (65.5, 16.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 477
+[INFO] [1792522652.757221451] [flight_controller]: SEARCH: goal (67.7, 15.3) cap 2.0 m/s; altitude 6.00 m; goals accepted 491
+[INFO] [1792522654.758372167] [flight_controller]: SEARCH: goal (67.7, 17.9) cap 1.2 m/s; altitude 6.01 m; goals accepted 506
+[INFO] [1792522656.808263500] [flight_controller]: SEARCH: goal (67.5, 18.1) cap 2.0 m/s; altitude 6.00 m; goals accepted 521
+[INFO] [1792522658.857432585] [flight_controller]: SEARCH: goal (63.1, 17.9) cap 2.0 m/s; altitude 6.01 m; goals accepted 536
+[INFO] [1792522660.858431087] [flight_controller]: SEARCH: goal (60.1, 17.8) cap 2.0 m/s; altitude 6.00 m; goals accepted 551
+[INFO] [1792522662.858809381] [flight_controller]: SEARCH: goal (57.1, 17.9) cap 2.0 m/s; altitude 5.99 m; goals accepted 566
+[INFO] [1792522664.907366810] [flight_controller]: SEARCH: goal (54.0, 17.9) cap 2.0 m/s; altitude 5.99 m; goals accepted 581
+[INFO] [1792522666.907480182] [flight_controller]: SEARCH: goal (50.9, 17.9) cap 2.0 m/s; altitude 6.00 m; goals accepted 596
+[INFO] [1792522668.908626606] [flight_controller]: SEARCH: goal (48.4, 17.9) cap 2.0 m/s; altitude 6.01 m; goals accepted 611
+[INFO] [1792522670.957542451] [flight_controller]: SEARCH: goal (48.3, 20.5) cap 2.0 m/s; altitude 6.02 m; goals accepted 624
+[INFO] [1792522672.957572708] [flight_controller]: SEARCH: goal (48.3, 20.4) cap 2.0 m/s; altitude 6.00 m; goals accepted 636
+[INFO] [1792522675.007451611] [flight_controller]: SEARCH: goal (53.2, 20.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 651
+[INFO] [1792522677.057805169] [flight_controller]: SEARCH: goal (55.8, 20.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 665
+[INFO] [1792522679.107628592] [flight_controller]: SEARCH: goal (59.0, 20.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 681
+[INFO] [1792522681.108296352] [flight_controller]: SEARCH: goal (62.1, 20.4) cap 2.0 m/s; altitude 6.00 m; goals accepted 696
+[INFO] [1792522683.158074838] [flight_controller]: SEARCH: goal (65.1, 20.4) cap 2.0 m/s; altitude 5.98 m; goals accepted 711
+[INFO] [1792522685.207049494] [flight_controller]: SEARCH: goal (67.7, 20.5) cap 2.0 m/s; altitude 5.99 m; goals accepted 727
+[INFO] [1792522687.207352256] [flight_controller]: SEARCH: goal (67.7, 23.1) cap 2.0 m/s; altitude 6.01 m; goals accepted 739
+[INFO] [1792522689.207580816] [flight_controller]: SEARCH: goal (67.6, 23.2) cap 2.0 m/s; altitude 5.99 m; goals accepted 751
+[INFO] [1792522691.207684918] [flight_controller]: SEARCH: goal (62.9, 23.1) cap 2.0 m/s; altitude 6.01 m; goals accepted 766
+[INFO] [1792522693.256916650] [flight_controller]: SEARCH: goal (59.9, 23.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 781
+[INFO] [1792522695.257571363] [flight_controller]: SEARCH: goal (56.9, 23.0) cap 2.0 m/s; altitude 5.98 m; goals accepted 796
+[INFO] [1792522697.257742212] [flight_controller]: SEARCH: goal (53.9, 23.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 811
+[INFO] [1792522699.258557382] [flight_controller]: SEARCH: goal (50.8, 23.1) cap 2.0 m/s; altitude 6.00 m; goals accepted 826
+[INFO] [1792522701.307378059] [flight_controller]: SEARCH: goal (48.3, 23.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 842
+[INFO] [1792522703.357535646] [flight_controller]: SEARCH: goal (48.3, 25.7) cap 2.0 m/s; altitude 6.02 m; goals accepted 855
+[INFO] [1792522705.358286783] [flight_controller]: SEARCH: goal (48.3, 25.7) cap 2.0 m/s; altitude 6.00 m; goals accepted 868
+[INFO] [1792522707.408178534] [flight_controller]: SEARCH: goal (53.2, 25.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 883
+[INFO] [1792522709.408429128] [flight_controller]: SEARCH: goal (56.1, 25.3) cap 2.0 m/s; altitude 6.00 m; goals accepted 898
+[INFO] [1792522711.458104657] [flight_controller]: SEARCH: goal (59.1, 25.2) cap 2.0 m/s; altitude 5.99 m; goals accepted 913
+[INFO] [1792522713.507129022] [flight_controller]: SEARCH: goal (62.1, 25.1) cap 2.0 m/s; altitude 6.00 m; goals accepted 928
+[INFO] [1792522715.557277837] [flight_controller]: SEARCH: goal (65.4, 25.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 944
+[INFO] [1792522717.608652689] [flight_controller]: SEARCH: goal (67.5, 24.9) cap 1.2 m/s; altitude 6.00 m; goals accepted 960
+[INFO] [1792522719.658014589] [flight_controller]: SEARCH: goal (66.9, 24.9) cap 1.2 m/s; altitude 5.99 m; goals accepted 971
+[INFO] [1792522721.658451414] [flight_controller]: SEARCH: goal (67.4, 24.9) cap 1.2 m/s; altitude 5.99 m; goals accepted 986
+[INFO] [1792522723.707350479] [flight_controller]: SEARCH: goal (67.4, 24.9) cap 1.2 m/s; altitude 5.99 m; goals accepted 1002
+[INFO] [1792522725.708333441] [flight_controller]: SEARCH: goal (64.0, 23.7) cap 1.2 m/s; altitude 6.00 m; goals accepted 1016
+[INFO] [1792522727.758306788] [flight_controller]: SEARCH: goal (62.6, 23.2) cap 1.2 m/s; altitude 5.99 m; goals accepted 1032
+[INFO] [1792522729.807862370] [flight_controller]: SEARCH: goal (60.5, 22.4) cap 2.0 m/s; altitude 6.00 m; goals accepted 1047
+[INFO] [1792522731.807968443] [flight_controller]: SEARCH: goal (57.7, 21.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 1062
+[INFO] [1792522733.808199152] [flight_controller]: SEARCH: goal (54.9, 20.3) cap 2.0 m/s; altitude 6.01 m; goals accepted 1077
+[INFO] [1792522735.857041184] [flight_controller]: SEARCH: goal (52.0, 19.3) cap 2.0 m/s; altitude 5.99 m; goals accepted 1092
+[INFO] [1792522737.908551008] [flight_controller]: SEARCH: goal (49.0, 18.2) cap 2.0 m/s; altitude 5.99 m; goals accepted 1108
+[INFO] [1792522739.957315515] [flight_controller]: SEARCH: goal (46.4, 17.2) cap 2.0 m/s; altitude 6.01 m; goals accepted 1122
+[INFO] [1792522742.007968656] [flight_controller]: SEARCH: goal (43.5, 16.1) cap 2.0 m/s; altitude 6.00 m; goals accepted 1138
+[INFO] [1792522744.058368705] [flight_controller]: SEARCH: goal (40.7, 15.1) cap 2.0 m/s; altitude 6.00 m; goals accepted 1153
+[INFO] [1792522746.107749149] [flight_controller]: SEARCH: goal (37.8, 14.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 1169
+[INFO] [1792522748.157520599] [flight_controller]: SEARCH: goal (35.1, 13.0) cap 2.0 m/s; altitude 6.01 m; goals accepted 1184
+[INFO] [1792522750.157955460] [flight_controller]: SEARCH: goal (32.2, 11.9) cap 2.0 m/s; altitude 6.00 m; goals accepted 1200
+[INFO] [1792522752.206935130] [flight_controller]: SEARCH: goal (29.4, 10.9) cap 2.0 m/s; altitude 5.99 m; goals accepted 1215
+[INFO] [1792522754.207718696] [flight_controller]: SEARCH: goal (26.5, 9.9) cap 2.0 m/s; altitude 5.99 m; goals accepted 1231
+[INFO] [1792522756.258047321] [flight_controller]: SEARCH: goal (23.8, 8.8) cap 2.0 m/s; altitude 5.99 m; goals accepted 1246
+[INFO] [1792522758.307001497] [flight_controller]: SEARCH: goal (20.9, 7.7) cap 2.0 m/s; altitude 6.00 m; goals accepted 1262
+[INFO] [1792522760.357515943] [flight_controller]: SEARCH: goal (18.2, 6.7) cap 2.0 m/s; altitude 6.01 m; goals accepted 1277
+[INFO] [1792522762.407745425] [flight_controller]: SEARCH: goal (15.3, 5.7) cap 2.0 m/s; altitude 6.01 m; goals accepted 1293
+[INFO] [1792522764.408506494] [flight_controller]: SEARCH: goal (12.6, 4.6) cap 2.0 m/s; altitude 6.00 m; goals accepted 1308
+[INFO] [1792522766.408558872] [flight_controller]: SEARCH: goal (10.0, 3.7) cap 2.0 m/s; altitude 6.01 m; goals accepted 1322
+[INFO] [1792522768.457599780] [flight_controller]: SEARCH: goal (7.1, 2.6) cap 2.0 m/s; altitude 5.99 m; goals accepted 1338
+[INFO] [1792522770.506962532] [flight_controller]: SEARCH: goal (4.4, 1.7) cap 2.0 m/s; altitude 5.99 m; goals accepted 1353
+[INFO] [1792522772.557666628] [flight_controller]: SEARCH: goal (1.7, 0.6) cap 2.0 m/s; altitude 6.00 m; goals accepted 1368
+[INFO] [1792522774.558265907] [flight_controller]: SEARCH: goal (-0.1, -0.0) cap 2.0 m/s; altitude 6.00 m; goals accepted 1383
+[INFO] [1792522774.908339831] [flight_controller]: RETURN_HOME: search planner reports the search complete; returning to the takeoff point (-0.0, -0.0) NED
+[INFO] [1792522774.956373078] [flight_controller]: RETURN_HOME: horizontal error 1.75 m; altitude 6.00 m
+[INFO] [1792522776.005887638] [flight_controller]: RETURN_HOME: horizontal error 0.43 m; altitude 5.99 m
+[INFO] [1792522777.007000292] [flight_controller]: RETURN_HOME: horizontal error 0.06 m; altitude 5.99 m
+[INFO] [1792522777.056825463] [flight_controller]: REQUEST_LAND: home reached at altitude 5.99 m; requesting AUTO LAND
+[INFO] [1792522777.105499013] [flight_controller]: Sent command 21 (attempt 1/4)
+[INFO] [1792522777.115438285] [flight_controller]: Command 21 ACK: ACCEPTED
+[INFO] [1792522777.154766050] [flight_controller]: LANDING: PX4 accepted NAV_LAND; verifying landed state
+[INFO] [1792522793.054476135] [flight_controller]: COMPLETE: PX4 reports landed and disarmed
+[INFO] [1792522793.057526532] [flight_controller]: FLIGHT COMPLETE; final relative altitude 0.03 m
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/uav_autonomy/flight_controller", line 33, in <module>
+    sys.exit(load_entry_point('uav-autonomy==0.0.0', 'console_scripts', 'flight_controller')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/python3.12/site-packages/uav_autonomy/flight_controller.py", line 1127, in main
+    rclpy.spin(node)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+    executor.spin_once()
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[ros2run]: Process exited with failure 1

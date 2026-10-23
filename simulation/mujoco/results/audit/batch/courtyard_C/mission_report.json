@@ -1,0 +1,109 @@
+{
+ "instruction": "Search the courtyard for survivors, report survivor locations, and return to base.",
+ "scene": "urban_C",
+ "mission": {
+  "name": "search_courtyard",
+  "search_area": {
+   "north": [
+    6.0,
+    20.0
+   ],
+   "east": [
+    53.0,
+    67.0
+   ]
+  },
+  "altitude_m": 6.0,
+  "time_budget_s": 200.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0
+ },
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "search_time_s": 93.0,
+ "coverage": 1.0,
+ "waypoints_skipped_unreachable": [],
+ "camera_frames": 460,
+ "detections": 246,
+ "survivors_in_scene": [
+  "survivor_block",
+  "survivor_courtyard",
+  "survivor_front"
+ ],
+ "survivors_found": [
+  "survivor_courtyard"
+ ],
+ "entries": [
+  {
+   "id": 1,
+   "east_m": 57.32,
+   "north_m": 16.14,
+   "sigma_m": 0.08,
+   "observations": 59,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 0.23,
+   "nearest_survivor": "survivor_courtyard"
+  },
+  {
+   "id": 2,
+   "east_m": 57.91,
+   "north_m": 15.8,
+   "sigma_m": 0.12,
+   "observations": 6,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 0.46,
+   "nearest_survivor": "survivor_courtyard"
+  },
+  {
+   "id": 5,
+   "east_m": 66.01,
+   "north_m": 17.0,
+   "sigma_m": 0.11,
+   "observations": 52,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": 8.57,
+   "nearest_survivor": "survivor_courtyard"
+  }
+ ],
+ "false_candidates": [
+  5
+ ],
+ "collisions": [],
+ "min_lidar_range_m": 1.58,
+ "returned_home": true,
+ "landed": true,
+ "landing_offset_m": 0.098,
+ "touchdown_speed_m_s": 0.335,
+ "timeline": [
+  [
+   "TAKEOFF_DONE",
+   5.9
+  ],
+  [
+   "SEARCH_END: search area covered",
+   98.9
+  ],
+  [
+   "RETURNED",
+   138.8
+  ],
+  [
+   "LANDED",
+   149.5
+  ]
+ ],
+ "labels": {
+  "vehicle_pose": "simulator state (NOT PX4, NOT SLAM)",
+  "map": "lidar with known pose (NOT SLAM)",
+  "verification": "none: no VLM, candidates unverified",
+  "detector": "project HSV+shape baseline on rendered frames"
+ }
+}

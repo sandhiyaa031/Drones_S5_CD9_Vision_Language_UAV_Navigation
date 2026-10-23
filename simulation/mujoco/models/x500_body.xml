@@ -1,0 +1,51 @@
+<!-- X500 quadrotor for MuJoCo (body frame FLU: x forward, y left, z up;
+     world ENU). Values from PX4's x500 Gazebo model and airframe 4001:
+     mass 2.0 kg + 4 x 0.016 kg rotors, inertia (0.02167, 0.02167, 0.04),
+     rotors at (+-0.13, +-0.22) m (FRD (0.13, 0.22), (-0.13,-0.20), (0.13,-0.22),
+     (-0.13, 0.20)), thrust F = 8.54858e-6 w^2 (max 8.55 N at w = 1000 rad/s),
+     yaw moment constant 0.016. Thrust and reaction torque are applied by
+     site-transmission motors, the vehicle is NOT moved by any other means. -->
+<mujoco>
+  <worldbody>
+    <body name="uav" pos="0 0 0.16">
+      <freejoint name="root"/>
+      <inertial pos="0 0 0" mass="2.064" diaginertia="0.02167 0.02167 0.04"/>
+      <geom name="uav_body" type="box" size="0.14 0.10 0.045" rgba="0.15 0.15 0.17 1"
+            contype="2" conaffinity="1"/>
+      <geom name="uav_plate" type="box" pos="0 0 0.05" size="0.10 0.08 0.01" rgba="0.55 0.08 0.05 1"
+            contype="0" conaffinity="0"/>
+      <geom name="arm_fl" type="capsule" fromto="0 0 0 0.13 0.22 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm_fr" type="capsule" fromto="0 0 0 0.13 -0.22 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm_bl" type="capsule" fromto="0 0 0 -0.13 0.20 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="arm_br" type="capsule" fromto="0 0 0 -0.13 -0.20 0" size="0.012" rgba="0.2 0.2 0.22 1" contype="0" conaffinity="0"/>
+      <geom name="rotor_fl" type="cylinder" pos="0.13 0.22 0.03" size="0.12 0.004" rgba="0.8 0.8 0.85 0.35" contype="2" conaffinity="1"/>
+      <geom name="rotor_fr" type="cylinder" pos="0.13 -0.22 0.03" size="0.12 0.004" rgba="0.8 0.8 0.85 0.35" contype="2" conaffinity="1"/>
+      <geom name="rotor_bl" type="cylinder" pos="-0.13 0.20 0.03" size="0.12 0.004" rgba="0.8 0.8 0.85 0.35" contype="2" conaffinity="1"/>
+      <geom name="rotor_br" type="cylinder" pos="-0.13 -0.20 0.03" size="0.12 0.004" rgba="0.8 0.8 0.85 0.35" contype="2" conaffinity="1"/>
+      <geom name="nose" type="box" pos="0.15 0 0" size="0.02 0.03 0.02" rgba="0.9 0.3 0.05 1" contype="0" conaffinity="0"/>
+      <geom name="lidar_dome" type="cylinder" pos="0 0 0.115" size="0.03 0.02" rgba="0.1 0.1 0.1 1" contype="0" conaffinity="0"/>
+      <geom name="leg0" type="capsule" fromto="0.1 0.09 -0.03 0.11499999999999999 0.1035 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg1" type="capsule" fromto="0.1 -0.09 -0.03 0.11499999999999999 -0.1035 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg2" type="capsule" fromto="-0.1 0.09 -0.03 -0.11499999999999999 0.1035 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <geom name="leg3" type="capsule" fromto="-0.1 -0.09 -0.03 -0.11499999999999999 -0.1035 -0.147" size="0.012" rgba="0.1 0.1 0.1 1" contype="2" conaffinity="1"/>
+      <site name="r0" pos="0.13 0.22 0.03" size="0.01"/>
+      <site name="r1" pos="0.13 -0.22 0.03" size="0.01"/>
+      <site name="r2" pos="-0.13 0.20 0.03" size="0.01"/>
+      <site name="r3" pos="-0.13 -0.20 0.03" size="0.01"/>
+      <site name="lidar" pos="0 0 0.115" size="0.01"/>
+      <!-- downward camera: image right = body right, image up = body forward -->
+      <camera name="down" pos="0 0 -0.14" xyaxes="0 -1 0 1 0 0" fovy="73"/>
+      <!-- upward depth camera for falling debris (Gazebo: 100 deg hfov, image up = body backward) -->
+      <camera name="up" pos="0 0 0.15" xyaxes="0 -1 0 -1 0 0" fovy="83.6"/>
+      <camera name="front" pos="0.16 0 0.02" xyaxes="0 -1 0 0 0 1" fovy="75"/>
+    </body>
+  </worldbody>
+  <actuator>
+    <!-- thrust along the site z axis plus the rotor's reaction torque about it;
+         spin directions as in PX4 (rotors 0,1 and 2,3 counter-rotate) -->
+    <motor name="m0" site="r0" gear="0 0 1 0 0 -0.016" ctrlrange="0 8.55"/>
+    <motor name="m1" site="r1" gear="0 0 1 0 0  0.016" ctrlrange="0 8.55"/>
+    <motor name="m2" site="r2" gear="0 0 1 0 0  0.016" ctrlrange="0 8.55"/>
+    <motor name="m3" site="r3" gear="0 0 1 0 0 -0.016" ctrlrange="0 8.55"/>
+  </actuator>
+</mujoco>

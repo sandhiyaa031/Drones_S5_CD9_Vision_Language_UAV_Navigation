@@ -1,0 +1,7 @@
+[INFO] [1792520682.987923418] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/image (gz.msgs.Image) -> /camera/image_raw (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1792520683.083519205] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/collapsed_building_rescue/model/x500_rescue_0/link/camera_link/sensor/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1792520683.085148629] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/depth_up/image (gz.msgs.Image) -> /depth_up/image_raw (sensor_msgs/msg/Image)] (Lazy 0)
+[INFO] [1792520683.085842721] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/depth_up/camera_info (gz.msgs.CameraInfo) -> /depth_up/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[INFO] [1792520683.086585140] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/uav/scan (gz.msgs.LaserScan) -> /uav/scan_raw (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[INFO] [1792520683.087619511] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[INFO] [1792520911.060878259] [rclcpp]: signal_handler(SIGINT/SIGTERM)

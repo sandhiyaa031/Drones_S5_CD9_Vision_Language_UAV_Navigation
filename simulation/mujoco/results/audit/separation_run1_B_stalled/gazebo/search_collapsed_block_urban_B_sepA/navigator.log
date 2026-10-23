@@ -1,0 +1,16 @@
+[INFO] [1792520686.515022430] [navigator]: Navigator ready: routes on the SLAM map; keep-out 1.75 m, look-ahead 3.5 m
+[INFO] [1792520706.978678782] [navigator]: FOLLOWING: goal (north 48.4, east 15.3) 
+[INFO] [1792520739.588969924] [navigator]: ARRIVED: goal (north 48.4, east 15.3) 
+[INFO] [1792520739.741854175] [navigator]: FOLLOWING: goal (north 67.7, east 15.3) 
+[INFO] [1792520751.406852789] [navigator]: ARRIVED: goal (north 57.3, east 16.2) 
+[INFO] [1792520757.555133492] [navigator]: FOLLOWING: goal (north 56.0, east 19.3) 
+[INFO] [1792520760.955241361] [navigator]: ARRIVED: goal (north 56.0, east 19.3) 
+[INFO] [1792520766.910051600] [navigator]: FOLLOWING: goal (north 67.7, east 15.3) 
+[INFO] [1792520775.531240721] [navigator]: ARRIVED: goal (north 67.7, east 15.3) 
+[INFO] [1792520775.662101266] [navigator]: FOLLOWING: goal (north 67.7, east 17.9) 
+[INFO] [1792520778.329166880] [navigator]: ARRIVED: goal (north 67.7, east 17.9) 
+[INFO] [1792520778.458380528] [navigator]: FOLLOWING: goal (north 48.4, east 17.9) 
+[INFO] [1792520793.498187798] [navigator]: ARRIVED: goal (north 48.4, east 20.5) 
+[INFO] [1792520793.624508723] [navigator]: FOLLOWING: goal (north 67.7, east 20.5) 
+[INFO] [1792520837.268737615] [navigator]: UNREACHABLE: goal (north 67.7, east 25.7) at the nearest reachable point to the goal
+[INFO] [1792520843.052702488] [navigator]: FOLLOWING: goal (north 0.0, east -0.0) 

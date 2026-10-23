@@ -1,0 +1,13 @@
+[INFO] [launch]: All log files can be found below /home/sandhiya/.ros/log/2026-10-21-00-25-59-996391-subatomic-fox-35154
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [async_slam_toolbox_node-1]: process started with pid [35211]
+[async_slam_toolbox_node-1] [INFO] [1792522560.656059851] [slam_toolbox]: Node using stack size 40000000
+[async_slam_toolbox_node-1] [INFO] [1792522561.078537830] [slam_toolbox]: Configuring
+[async_slam_toolbox_node-1] [INFO] [1792522561.093965600] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
+[async_slam_toolbox_node-1] [INFO] [1792522561.094511065] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+[INFO] [launch.user]: [LifecycleLaunch] Slamtoolbox node is activating.
+[async_slam_toolbox_node-1] [INFO] [1792522561.148318503] [slam_toolbox]: Activating
+[async_slam_toolbox_node-1] Registering sensor: [Custom Described Lidar]
+[async_slam_toolbox_node-1] [INFO] [1792522796.147761437] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[async_slam_toolbox_node-1] Unregistering sensor: Custom Described Lidar
+[INFO] [async_slam_toolbox_node-1]: process has finished cleanly [pid 35211]

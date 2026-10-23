@@ -1,0 +1,127 @@
+[
+ {
+  "run": "block_B",
+  "scene": "urban_B",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 86.0,
+  "coverage": 1.0,
+  "survivors_in_area": 1,
+  "survivors_in_scene": 1,
+  "survivors_found": 1,
+  "survivor_entries": 1,
+  "best_error_per_survivor_m": [
+   0.3
+  ],
+  "lookalike_entries": 0,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.097,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 2.02
+ },
+ {
+  "run": "block_D_occluded",
+  "scene": "urban_D",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 86.0,
+  "coverage": 1.0,
+  "survivors_in_area": 1,
+  "survivors_in_scene": 2,
+  "survivors_found": 1,
+  "survivor_entries": 1,
+  "best_error_per_survivor_m": [
+   0.35
+  ],
+  "lookalike_entries": 0,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.097,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 2.02
+ },
+ {
+  "run": "block_F_lookalikes",
+  "scene": "urban_F",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 101.4,
+  "coverage": 1.0,
+  "survivors_in_area": 0,
+  "survivors_in_scene": 0,
+  "survivors_found": 0,
+  "survivor_entries": 0,
+  "best_error_per_survivor_m": [],
+  "lookalike_entries": 2,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.098,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 2.03
+ },
+ {
+  "run": "courtyard_B2",
+  "scene": "urban_B2",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 79.2,
+  "coverage": 1.0,
+  "survivors_in_area": 1,
+  "survivors_in_scene": 1,
+  "survivors_found": 1,
+  "survivor_entries": 2,
+  "best_error_per_survivor_m": [
+   0.23
+  ],
+  "lookalike_entries": 0,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.098,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 1.57
+ },
+ {
+  "run": "courtyard_C",
+  "scene": "urban_C",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 93.0,
+  "coverage": 1.0,
+  "survivors_in_area": 1,
+  "survivors_in_scene": 3,
+  "survivors_found": 1,
+  "survivor_entries": 2,
+  "best_error_per_survivor_m": [
+   0.23
+  ],
+  "lookalike_entries": 1,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.098,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 1.58
+ },
+ {
+  "run": "zone_C_headline",
+  "scene": "urban_C",
+  "outcome": "COMPLETE",
+  "search_end": "search area covered",
+  "search_time_s": 316.6,
+  "coverage": 1.0,
+  "survivors_in_area": 2,
+  "survivors_in_scene": 3,
+  "survivors_found": 2,
+  "survivor_entries": 3,
+  "best_error_per_survivor_m": [
+   0.21,
+   0.41
+  ],
+  "lookalike_entries": 4,
+  "collisions": 0,
+  "landed": true,
+  "landing_offset_m": 0.099,
+  "touchdown_speed_m_s": 0.335,
+  "min_lidar_range_m": 1.73
+ }
+]

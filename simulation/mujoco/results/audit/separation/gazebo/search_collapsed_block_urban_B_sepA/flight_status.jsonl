@@ -1,0 +1,11 @@
+{"stamp":16.896,"state":"WAIT_FOR_DATA","avoidance_active":false,"mission_target":[0.0,0.0,0.0],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":18.44,"state":"PRESTREAM","avoidance_active":false,"mission_target":[-0.024,-0.034,-0.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":19.6,"state":"REQUEST_OFFBOARD","avoidance_active":false,"mission_target":[-0.024,-0.034,-0.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":19.8,"state":"WAIT_PREFLIGHT","avoidance_active":false,"mission_target":[-0.024,-0.034,-0.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":19.84,"state":"REQUEST_ARM","avoidance_active":false,"mission_target":[-0.024,-0.034,-0.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":21.12,"state":"TAKEOFF","avoidance_active":false,"mission_target":[-0.024,-0.034,-0.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":29.624,"state":"SEARCH","avoidance_active":false,"mission_target":[-0.024,-0.034,-6.016],"speed_limit":2.0,"avoidance_accepted":0}
+{"stamp":174.136,"state":"RETURN_HOME","avoidance_active":false,"mission_target":[-0.024,-0.034,-6.016],"speed_limit":2.0,"avoidance_accepted":0}
+{"stamp":175.752,"state":"REQUEST_LAND","avoidance_active":false,"mission_target":[-0.024,-0.034,-6.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":175.84,"state":"LANDING","avoidance_active":false,"mission_target":[-0.024,-0.034,-6.016],"speed_limit":0.0,"avoidance_accepted":0}
+{"stamp":188.016,"state":"COMPLETE","avoidance_active":false,"mission_target":[-0.024,-0.034,-6.016],"speed_limit":0.0,"avoidance_accepted":0}

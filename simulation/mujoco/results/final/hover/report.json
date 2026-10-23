@@ -1,0 +1,32 @@
+{
+ "scenario": "hover",
+ "scene": "urban_C",
+ "sim_time_s": 36.5,
+ "labels": {
+  "vehicle_state": "simulator ground truth (no estimator, no noise)",
+  "controller": "standalone cascaded controller, NOT PX4",
+  "map": "lidar rays with known pose (mapping, NOT SLAM)"
+ },
+ "args": {
+  "scenario": "hover",
+  "scene": "urban_C",
+  "gui": false,
+  "realtime": false,
+  "out": "results/final/hover",
+  "goal": [
+   33.0,
+   90.0
+  ]
+ },
+ "metrics": {
+  "takeoff_reached": true,
+  "hold_altitude_rmse_m": 0.0094,
+  "hold_altitude_max_dev_m": 0.0238,
+  "hold_horizontal_drift_m": 0.0,
+  "landed": true,
+  "touchdown_speed_m_s": 0.34,
+  "landing_offset_m": 0.0,
+  "ground_contact": true
+ },
+ "collisions": []
+}

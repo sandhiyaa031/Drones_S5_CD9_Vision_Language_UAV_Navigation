@@ -1,0 +1,2 @@
+GCS heartbeat -> udp 127.0.0.1:18570 at 1.0 Hz (system=255 component=190)
+GCS heartbeat stopped

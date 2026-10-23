@@ -1,0 +1,125 @@
+{
+ "instruction": "Search the collapsed apartment block for survivors, report survivor locations, and return to base.",
+ "scene": "urban_B",
+ "mission": {
+  "name": "search_collapsed_block",
+  "search_area": {
+   "north": [
+    44.0,
+    72.0
+   ],
+   "east": [
+    -12.0,
+    26.0
+   ]
+  },
+  "altitude_m": 6.0,
+  "time_budget_s": 300.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0
+ },
+ "outcome": "INCOMPLETE",
+ "search_end": "search area covered",
+ "search_time_s": 155.7,
+ "coverage": 0.78,
+ "waypoints_skipped_unreachable": [
+  [
+   -9.0,
+   50.0
+  ],
+  [
+   -9.0,
+   54.0
+  ],
+  [
+   -9.0,
+   58.0
+  ],
+  [
+   -9.0,
+   62.0
+  ],
+  [
+   23.0,
+   62.0
+  ],
+  [
+   23.0,
+   66.0
+  ],
+  [
+   -9.0,
+   66.0
+  ],
+  [
+   -9.0,
+   70.0
+  ],
+  [
+   23.0,
+   70.0
+  ]
+ ],
+ "camera_frames": 771,
+ "detections": 49,
+ "survivors_in_scene": [
+  "survivor_block"
+ ],
+ "survivors_found": [
+  "survivor_block"
+ ],
+ "entries": [
+  {
+   "id": 1,
+   "east_m": 16.48,
+   "north_m": 56.35,
+   "sigma_m": 0.52,
+   "observations": 7,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 1.45,
+   "nearest_survivor": "survivor_block"
+  }
+ ],
+ "false_candidates": [],
+ "collisions": [
+  [
+   139.49,
+   "geom175"
+  ]
+ ],
+ "min_lidar_range_m": 1.33,
+ "returned_home": false,
+ "landed": false,
+ "landing_offset_m": 61.186,
+ "touchdown_speed_m_s": null,
+ "timeline": [
+  [
+   "TAKEOFF_DONE",
+   5.9
+  ],
+  [
+   "SEARCH_END: search area covered",
+   161.6
+  ],
+  [
+   "RETURN_FAILED",
+   461.6
+  ],
+  [
+   "LAND_FAILED",
+   501.6
+  ]
+ ],
+ "labels": {
+  "vehicle_pose": "simulator state (NOT PX4, NOT SLAM)",
+  "map": "lidar with known pose (NOT SLAM)",
+  "verification": "none: no VLM, candidates unverified",
+  "detector": "project HSV+shape baseline on rendered frames"
+ }
+}

@@ -1,0 +1,35 @@
+[INFO] [1792515924.259803067] [flight_controller]: Flight controller ready; waiting for live PX4 telemetry. telemetry_only=False, waypoint_mission=False. Sequence: Offboard -> arm -> 3 m -> 30 s hold -> land.
+[WARN] [1792515924.273555506] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515929.274061932] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515934.323455357] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.1s
+[WARN] [1792515939.323622328] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515944.373721318] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515949.373899474] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.1s
+[WARN] [1792515954.423526563] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.1s
+[WARN] [1792515959.423791747] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515964.473597124] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515969.474101341] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515974.523767040] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=0.0s, status_age=0.0s
+[WARN] [1792515979.573374628] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=1.0s, status_age=1.1s
+[WARN] [1792515984.573613175] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=6.0s, status_age=6.1s
+[WARN] [1792515989.623494803] [flight_controller]: Waiting for PX4 telemetry: position_received=True, status_received=True, position_valid=False, position_age=11.1s, status_age=11.1s
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/uav_autonomy/flight_controller", line 33, in <module>
+    sys.exit(load_entry_point('uav-autonomy==0.0.0', 'console_scripts', 'flight_controller')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/python3.12/site-packages/uav_autonomy/flight_controller.py", line 1127, in main
+    rclpy.spin(node)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+    executor.spin_once()
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[ros2run]: Process exited with failure 1

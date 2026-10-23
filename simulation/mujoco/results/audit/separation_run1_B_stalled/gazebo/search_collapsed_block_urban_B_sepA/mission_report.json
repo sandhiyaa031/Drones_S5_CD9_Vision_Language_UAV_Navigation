@@ -1,0 +1,97 @@
+{
+ "mission": {
+  "name": "search_collapsed_block",
+  "north_min": 44.0,
+  "north_max": 72.0,
+  "east_min": 14.0,
+  "east_max": 27.0,
+  "altitude_m": 6.0,
+  "time_budget_s": 240.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "perception_timeout_s": 3.0,
+  "report_min_observations": 15,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0,
+  "priority_north": NaN,
+  "priority_east": NaN
+ },
+ "outcome": "COMPLETE",
+ "objective_met": true,
+ "search_end_reason": "search area covered",
+ "refused_because": [],
+ "timeline": [
+  {
+   "t": 2785.751,
+   "phase": "PREFLIGHT",
+   "note": ""
+  },
+  {
+   "t": 2790.751,
+   "phase": "STARTING",
+   "note": "all checks passed"
+  },
+  {
+   "t": 2791.251,
+   "phase": "TAKEOFF",
+   "note": ""
+  },
+  {
+   "t": 2804.751,
+   "phase": "SEARCH",
+   "note": ""
+  },
+  {
+   "t": 2987.752,
+   "phase": "RETURN",
+   "note": "search area covered"
+  },
+  {
+   "t": 2990.251,
+   "phase": "LANDING",
+   "note": ""
+  },
+  {
+   "t": 3005.251,
+   "phase": "COMPLETE",
+   "note": ""
+  }
+ ],
+ "duration_s": 214.5,
+ "search_time_s": 183.0,
+ "coverage_fraction": 1.0,
+ "inspections": 1,
+ "avoidance_manoeuvres": 0,
+ "vlm_available": false,
+ "battery_min": 0.5000267028808594,
+ "summary": {
+  "UNVERIFIED_CANDIDATE": 1
+ },
+ "entries": [
+  {
+   "id": 1,
+   "classification": "UNVERIFIED_CANDIDATE",
+   "local_ned_m": [
+    54.97,
+    16.86,
+    -2.6
+   ],
+   "horizontal_sigma_m": 0.21,
+   "localized": true,
+   "observations": 193,
+   "from_takeoff_m": {
+    "north": 54.95,
+    "east": 16.89
+   },
+   "latitude_deg": 47.3984652,
+   "longitude_deg": 8.5463886
+  }
+ ],
+ "notes": [
+  "No vision-language model was available: no entry could be confirmed; candidates are unverified.",
+  "Unverified candidates may be objects that only look like a person to the colour/shape detector."
+ ]
+}

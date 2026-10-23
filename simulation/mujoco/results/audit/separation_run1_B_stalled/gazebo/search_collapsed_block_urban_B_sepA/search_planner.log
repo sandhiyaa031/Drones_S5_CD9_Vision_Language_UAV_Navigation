@@ -1,0 +1,17 @@
+[INFO] [1792520686.519165182] [search_planner]: Search planner ready; area relative to takeoff: north [44.0, 72.0] east [14.0, 27.0] m
+[INFO] [1792520706.741138762] [search_planner]: Search started at 6.0 m: 10 waypoints, path 107.1 m, heading 96 deg; (48.4, 15.3) -> (67.7, 15.3) -> (67.7, 17.9) -> (48.4, 17.9) -> (48.4, 20.5) -> (67.7, 20.5) -> (67.7, 23.1) -> (48.4, 23.1) -> (48.4, 25.7) -> (67.7, 25.7)
+[INFO] [1792520706.742127130] [search_planner]: SEARCHING: coverage waypoint 1/10 -> (48.4, 15.3)
+[INFO] [1792520739.641703448] [search_planner]: SEARCHING: coverage waypoint 2/10 -> (67.7, 15.3)
+[INFO] [1792520747.741455450] [search_planner]: INSPECTING: inspecting candidate 1, view 1/2 -> (57.3, 16.2)
+[INFO] [1792520757.441161151] [search_planner]: INSPECTING: inspecting candidate 1, view 2/2 -> (56.0, 19.3)
+[INFO] [1792520766.841030836] [search_planner]: SEARCHING: coverage waypoint 2/10 -> (67.7, 15.3)
+[INFO] [1792520775.541017576] [search_planner]: SEARCHING: coverage waypoint 3/10 -> (67.7, 17.9)
+[INFO] [1792520778.341340614] [search_planner]: SEARCHING: coverage waypoint 4/10 -> (48.4, 17.9)
+[INFO] [1792520791.140876582] [search_planner]: SEARCHING: coverage waypoint 5/10 -> (48.4, 20.5)
+[INFO] [1792520793.541002198] [search_planner]: SEARCHING: coverage waypoint 6/10 -> (67.7, 20.5)
+[INFO] [1792520806.340722620] [search_planner]: SEARCHING: coverage waypoint 7/10 -> (67.7, 23.1)
+[INFO] [1792520808.540641293] [search_planner]: SEARCHING: coverage waypoint 8/10 -> (48.4, 23.1)
+[INFO] [1792520821.240902502] [search_planner]: SEARCHING: coverage waypoint 9/10 -> (48.4, 25.7)
+[INFO] [1792520823.541049476] [search_planner]: SEARCHING: coverage waypoint 10/10 -> (67.7, 25.7)
+[WARN] [1792520842.864873475] [search_planner]: Target (67.7, 25.7) skipped: the navigator found no route to it
+[INFO] [1792520842.941163214] [search_planner]: COMPLETE: coverage path finished -> (67.7, 25.7)

@@ -1,0 +1,48 @@
+{
+ "scenario": "nav",
+ "scene": "urban_C",
+ "sim_time_s": 123.0,
+ "labels": {
+  "vehicle_state": "simulator ground truth (no estimator, no noise)",
+  "controller": "standalone cascaded controller, NOT PX4",
+  "map": "lidar rays with known pose (mapping, NOT SLAM)"
+ },
+ "args": {
+  "scenario": "nav",
+  "scene": "urban_C",
+  "gui": false,
+  "realtime": false,
+  "out": "results/audit/nav",
+  "goal": [
+   33.0,
+   90.0
+  ]
+ },
+ "metrics": {
+  "takeoff_reached": true,
+  "goal_reached": true,
+  "goal_en": [
+   33.0,
+   90.0
+  ],
+  "straight_line_m": 95.9,
+  "flown_path_m": 111.0,
+  "flight_time_s": 54.7,
+  "collisions": [],
+  "min_lidar_range_m": 1.69,
+  "navigator_states": {
+   "FOLLOWING": 540
+  },
+  "plans": 60,
+  "replans_after_block": 15,
+  "plan_ms_median": 0.37,
+  "plan_ms_p95": 62.73,
+  "map_scans": 540,
+  "returned_home": true,
+  "landed": true,
+  "touchdown_speed_m_s": 0.335,
+  "landing_offset_m": 0.112,
+  "ground_contact": true
+ },
+ "collisions": []
+}

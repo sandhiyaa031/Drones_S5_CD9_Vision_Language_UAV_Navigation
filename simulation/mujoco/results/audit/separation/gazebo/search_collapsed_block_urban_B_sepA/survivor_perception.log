@@ -1,0 +1,2 @@
+[INFO] [1792522557.688977268] [survivor_perception]: Survivor perception ready (simulation baseline detector). VLM endpoint: <none>, model: <none>
+[WARN] [1792522557.689751482] [survivor_perception]: No VLM endpoint/model configured: candidates will be published, verification status will be VLM_UNAVAILABLE, nothing will be reported as confirmed.

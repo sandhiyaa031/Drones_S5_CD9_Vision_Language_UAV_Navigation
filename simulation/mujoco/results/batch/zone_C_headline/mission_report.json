@@ -1,0 +1,168 @@
+{
+ "instruction": "Search the disaster zone for survivors, prioritize the collapsed apartment block, report survivor locations, and return to base.",
+ "scene": "urban_C",
+ "mission": {
+  "name": "search_disaster_zone",
+  "search_area": {
+   "north": [
+    24.0,
+    72.0
+   ],
+   "east": [
+    14.0,
+    43.0
+   ]
+  },
+  "altitude_m": 6.0,
+  "time_budget_s": 420.0,
+  "stop_policy": "area_covered",
+  "require_vlm": false,
+  "require_debris_protection": false,
+  "battery_return_fraction": 0.25,
+  "limit_range_m": 130.0,
+  "limit_extent_m": 100.0,
+  "limit_time_budget_s": 600.0,
+  "priority_north": 58.0,
+  "priority_east": 20.5
+ },
+ "outcome": "COMPLETE",
+ "search_end": "search area covered",
+ "search_time_s": 316.6,
+ "coverage": 1.0,
+ "waypoints_skipped_unreachable": [
+  [
+   27.1,
+   68.0
+  ],
+  [
+   38.6,
+   68.0
+  ]
+ ],
+ "camera_frames": 1575,
+ "detections": 643,
+ "survivors_in_scene": [
+  "survivor_block",
+  "survivor_courtyard",
+  "survivor_front"
+ ],
+ "survivors_found": [
+  "survivor_block",
+  "survivor_front"
+ ],
+ "entries": [
+  {
+   "id": 2,
+   "east_m": 16.81,
+   "north_m": 55.07,
+   "sigma_m": 0.19,
+   "observations": 12,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 0.21,
+   "nearest_survivor": "survivor_block"
+  },
+  {
+   "id": 3,
+   "east_m": 23.0,
+   "north_m": 29.01,
+   "sigma_m": 0.06,
+   "observations": 67,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": 23.19,
+   "nearest_survivor": "survivor_front"
+  },
+  {
+   "id": 4,
+   "east_m": 23.89,
+   "north_m": 61.88,
+   "sigma_m": 0.07,
+   "observations": 85,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": 9.74,
+   "nearest_survivor": "survivor_block"
+  },
+  {
+   "id": 5,
+   "east_m": 33.0,
+   "north_m": 40.0,
+   "sigma_m": 0.03,
+   "observations": 142,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": 9.02,
+   "nearest_survivor": "survivor_front"
+  },
+  {
+   "id": 6,
+   "east_m": 41.08,
+   "north_m": 36.0,
+   "sigma_m": 0.04,
+   "observations": 115,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "look-alike",
+   "error_to_nearest_survivor_m": 7.01,
+   "nearest_survivor": "survivor_front"
+  },
+  {
+   "id": 7,
+   "east_m": 41.26,
+   "north_m": 42.62,
+   "sigma_m": 0.21,
+   "observations": 9,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 0.45,
+   "nearest_survivor": "survivor_front"
+  },
+  {
+   "id": 8,
+   "east_m": 41.79,
+   "north_m": 43.29,
+   "sigma_m": 0.17,
+   "observations": 8,
+   "status": "UNVERIFIED_CANDIDATE (no VLM)",
+   "scored_as": "survivor",
+   "error_to_nearest_survivor_m": 0.41,
+   "nearest_survivor": "survivor_front"
+  }
+ ],
+ "false_candidates": [
+  3,
+  4,
+  5,
+  6
+ ],
+ "collisions": [],
+ "min_lidar_range_m": 1.73,
+ "returned_home": true,
+ "landed": true,
+ "landing_offset_m": 0.099,
+ "touchdown_speed_m_s": 0.335,
+ "timeline": [
+  [
+   "TAKEOFF_DONE",
+   5.9
+  ],
+  [
+   "SEARCH_END: search area covered",
+   322.5
+  ],
+  [
+   "RETURNED",
+   347.2
+  ],
+  [
+   "LANDED",
+   357.9
+  ]
+ ],
+ "labels": {
+  "vehicle_pose": "simulator state (NOT PX4, NOT SLAM)",
+  "map": "lidar with known pose (NOT SLAM)",
+  "verification": "none: no VLM, candidates unverified",
+  "detector": "project HSV+shape baseline on rendered frames"
+ }
+}

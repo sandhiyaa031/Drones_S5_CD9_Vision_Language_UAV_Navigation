@@ -1,0 +1,10 @@
+[INFO] [1792520687.375158771] [mission_manager]: Mission manager ready. Mission 'search_collapsed_block': area north [44.0, 72.0] east [14.0, 27.0] m, altitude 6.0 m, budget 240 s, stop policy area_covered, require_vlm=False
+[INFO] [1792520687.827595136] [mission_manager]: MISSION PREFLIGHT
+[INFO] [1792520692.827187227] [mission_manager]: MISSION STARTING: all checks passed
+[INFO] [1792520692.828240344] [mission_manager]: MISSION command START: preflight checks passed
+[INFO] [1792520693.327437897] [mission_manager]: MISSION TAKEOFF
+[INFO] [1792520706.827651647] [mission_manager]: MISSION SEARCH
+[INFO] [1792520889.828566081] [mission_manager]: MISSION RETURN: search area covered
+[INFO] [1792520892.327345472] [mission_manager]: MISSION LANDING
+[INFO] [1792520907.327675358] [mission_manager]: MISSION COMPLETE
+[INFO] [1792520907.329728704] [mission_manager]: MISSION REPORT: outcome COMPLETE, search ended: search area covered, coverage 1.00, entries {'UNVERIFIED_CANDIDATE': 1}, written to /home/sandhiya/Desktop/drones/ros2_ws/simulation/mujoco/results/audit/separation/gazebo/search_collapsed_block_urban_B_sepA/mission_report.json

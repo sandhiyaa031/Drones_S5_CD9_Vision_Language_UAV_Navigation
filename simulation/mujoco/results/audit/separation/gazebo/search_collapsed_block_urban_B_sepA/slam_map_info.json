@@ -1,0 +1,14 @@
+{
+ "maps_received": 212,
+ "map_odom_corrections": 336,
+ "width": 343,
+ "height": 368,
+ "resolution": 0.25,
+ "origin": [
+  -28.057555960882254,
+  -0.024706006052796495
+ ],
+ "occupied_cells": 2021,
+ "free_cells": 40359,
+ "unknown_cells": 83844
+}

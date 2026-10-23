@@ -1,0 +1,71 @@
+[INFO] [1792519251.097109494] [flight_controller]: Flight controller ready; waiting for live PX4 telemetry. telemetry_only=False, waypoint_mission=False. Sequence: Offboard -> arm -> 3 m -> 30 s hold -> land.
+[INFO] [1792519251.110560876] [flight_controller]: PRESTREAM: streaming current-position hold setpoints before mode change
+[INFO] [1792519252.610914837] [flight_controller]: REQUEST_OFFBOARD: prestream complete; requesting Offboard
+[INFO] [1792519252.661178369] [flight_controller]: Sent command 176 (attempt 1/4)
+[INFO] [1792519252.665198735] [flight_controller]: Command 176 ACK: ACCEPTED
+[INFO] [1792519252.760861499] [flight_controller]: WAIT_PREFLIGHT: PX4 reports Offboard; waiting for preflight pass
+[INFO] [1792519252.811390350] [flight_controller]: REQUEST_ARM: preflight checks pass; requesting arm
+[INFO] [1792519254.661134254] [flight_controller]: Sent command 400 (attempt 1/4)
+[INFO] [1792519254.666868038] [flight_controller]: Command 400 ACK: ACCEPTED
+[INFO] [1792519254.710682107] [flight_controller]: TAKEOFF: PX4 status confirms armed and Offboard
+[INFO] [1792519254.761439227] [flight_controller]: Takeoff target: NED z=-3.00 m (3.00 m above start)
+[INFO] [1792519254.762838764] [flight_controller]: Takeoff altitude: -0.00 m
+[INFO] [1792519255.812075588] [flight_controller]: Takeoff altitude: 0.01 m
+[INFO] [1792519256.861977561] [flight_controller]: Takeoff altitude: 2.64 m
+[INFO] [1792519257.111584080] [flight_controller]: HOLD: altitude verified at 2.76 m; starting 30 s hold
+[INFO] [1792519257.162241079] [flight_controller]: Hold altitude: 2.77 m; elapsed 0.1/30 s
+[INFO] [1792519258.163313784] [flight_controller]: Hold altitude: 2.94 m; elapsed 1.1/30 s
+[INFO] [1792519259.212306572] [flight_controller]: Hold altitude: 2.99 m; elapsed 2.1/30 s
+[INFO] [1792519260.212371420] [flight_controller]: Hold altitude: 3.00 m; elapsed 3.1/30 s
+[INFO] [1792519261.213304771] [flight_controller]: Hold altitude: 3.00 m; elapsed 4.1/30 s
+[INFO] [1792519262.262488254] [flight_controller]: Hold altitude: 3.00 m; elapsed 5.2/30 s
+[INFO] [1792519263.312094594] [flight_controller]: Hold altitude: 3.00 m; elapsed 6.2/30 s
+[INFO] [1792519264.313417783] [flight_controller]: Hold altitude: 3.00 m; elapsed 7.2/30 s
+[INFO] [1792519265.362188474] [flight_controller]: Hold altitude: 3.00 m; elapsed 8.2/30 s
+[INFO] [1792519266.362582480] [flight_controller]: Hold altitude: 3.00 m; elapsed 9.3/30 s
+[INFO] [1792519267.363481797] [flight_controller]: Hold altitude: 3.00 m; elapsed 10.3/30 s
+[INFO] [1792519268.412268862] [flight_controller]: Hold altitude: 3.00 m; elapsed 11.3/30 s
+[INFO] [1792519269.412695669] [flight_controller]: Hold altitude: 3.00 m; elapsed 12.3/30 s
+[INFO] [1792519270.413104312] [flight_controller]: Hold altitude: 3.00 m; elapsed 13.3/30 s
+[INFO] [1792519271.462117719] [flight_controller]: Hold altitude: 3.00 m; elapsed 14.3/30 s
+[INFO] [1792519272.462227987] [flight_controller]: Hold altitude: 3.00 m; elapsed 15.3/30 s
+[INFO] [1792519273.463092757] [flight_controller]: Hold altitude: 3.00 m; elapsed 16.4/30 s
+[INFO] [1792519274.512820675] [flight_controller]: Hold altitude: 3.00 m; elapsed 17.4/30 s
+[INFO] [1792519275.562357267] [flight_controller]: Hold altitude: 3.00 m; elapsed 18.5/30 s
+[INFO] [1792519276.563382579] [flight_controller]: Hold altitude: 3.00 m; elapsed 19.5/30 s
+[INFO] [1792519277.612102395] [flight_controller]: Hold altitude: 3.00 m; elapsed 20.5/30 s
+[INFO] [1792519278.612844564] [flight_controller]: Hold altitude: 3.00 m; elapsed 21.5/30 s
+[INFO] [1792519279.613477822] [flight_controller]: Hold altitude: 3.00 m; elapsed 22.5/30 s
+[INFO] [1792519280.662098334] [flight_controller]: Hold altitude: 3.00 m; elapsed 23.5/30 s
+[INFO] [1792519281.662526198] [flight_controller]: Hold altitude: 3.00 m; elapsed 24.6/30 s
+[INFO] [1792519282.663389315] [flight_controller]: Hold altitude: 3.00 m; elapsed 25.6/30 s
+[INFO] [1792519283.712134733] [flight_controller]: Hold altitude: 3.00 m; elapsed 26.6/30 s
+[INFO] [1792519284.712402825] [flight_controller]: Hold altitude: 3.00 m; elapsed 27.6/30 s
+[INFO] [1792519285.713354878] [flight_controller]: Hold altitude: 3.00 m; elapsed 28.6/30 s
+[INFO] [1792519286.762258279] [flight_controller]: Hold altitude: 3.00 m; elapsed 29.7/30 s
+[INFO] [1792519287.112679752] [flight_controller]: REQUEST_LAND: 30 s altitude hold verified; requesting AUTO LAND
+[INFO] [1792519287.160625275] [flight_controller]: Sent command 21 (attempt 1/4)
+[INFO] [1792519287.163580803] [flight_controller]: Command 21 ACK: ACCEPTED
+[INFO] [1792519287.210531544] [flight_controller]: LANDING: PX4 accepted NAV_LAND; verifying landed state
+[INFO] [1792519289.860420741] [flight_controller]: COMPLETE: PX4 reports landed and disarmed
+[INFO] [1792519289.862722594] [flight_controller]: FLIGHT COMPLETE; final relative altitude 0.09 m
+Traceback (most recent call last):
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/uav_autonomy/flight_controller", line 33, in <module>
+    sys.exit(load_entry_point('uav-autonomy==0.0.0', 'console_scripts', 'flight_controller')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/sandhiya/Desktop/drones/ros2_ws/install/uav_autonomy/lib/python3.12/site-packages/uav_autonomy/flight_controller.py", line 1127, in main
+    rclpy.spin(node)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+    executor.spin_once()
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+    self._spin_once_impl(timeout_sec)
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+    handler, entity, node = self.wait_for_ready_callbacks(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+    return next(self._cb_iter)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+    raise ExternalShutdownException()
+rclpy.executors.ExternalShutdownException
+[ros2run]: Process exited with failure 1
