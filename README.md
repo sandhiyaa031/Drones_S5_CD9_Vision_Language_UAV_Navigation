@@ -70,11 +70,10 @@ Our project is a step towards drones that can **see, understand and react on the
 
 ---
 
-## 3. Key Terms Used in This README
+## 3. Key Terms
 
-If you are new to drones or robotics, these short explanations will help.
 
-| Term | Simple meaning |
+| Term | Meaning |
 |---|---|
 | **UAV** | Unmanned Aerial Vehicle, i.e. a drone |
 | **GPS-denied** | A place where GPS does not work, like inside a building |
