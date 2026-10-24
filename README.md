@@ -246,43 +246,6 @@ The x500 parameters come from the PX4 `x500` model and are used identically in M
 | Motor time constant | | 0.0125 s spin-up, 0.025 s spin-down |
 | Reaction-torque coefficient | <i>k</i><sub><i>m</i></sub> | 0.016 m |
 
-**Rigid-body dynamics [background]** (world frame, z up):
-
-$$
-m\,\ddot{\mathbf{p}} = -m g\,\mathbf{e}_z + T\,\mathbf{R}\,\mathbf{e}_z,
-\qquad
-\mathbf{J}\,\dot{\boldsymbol{\omega}} = \boldsymbol{\tau} - \boldsymbol{\omega} \times \mathbf{J}\boldsymbol{\omega},
-\qquad
-\dot{\mathbf{R}} = \mathbf{R}\,[\boldsymbol{\omega}]_{\times}
-$$
-
-where <b>p</b> is the position, <i>g</i> = 9.81 m/s<sup>2</sup>, <i>T</i> the total thrust along the body z axis,
-<b>J</b> = diag(<i>J</i><sub><i>x</i><i>x</i></sub>, <i>J</i><sub><i>y</i><i>y</i></sub>, <i>J</i><sub><i>z</i><i>z</i></sub>) the inertia matrix, <b>ω</b> the body angular rate,
-<b>τ</b> the body torque, and [<b>ω</b>]<sub>×</sub> the skew-symmetric matrix of <b>ω</b>.
-
-**Control allocation.** The four rotor thrusts <i>f</i><sub>1</sub>, …, <i>f</i><sub>4</sub> map to the collective thrust and the three body torques
-through the rotor geometry:
-
-$$
-\begin{bmatrix} T \\ \tau_x \\ \tau_y \\ \tau_z \end{bmatrix}
-=
-```math
-\begin{bmatrix} T \\ \tau_x \\ \tau_y \\ \tau_z \end{bmatrix}
-=
-\underbrace{\begin{bmatrix}
-1 & 1 & 1 & 1 \\
-0.22 & {-0.22} & 0.20 & {-0.20} \\
-{-0.13} & {-0.13} & 0.13 & 0.13 \\
-{-k_m} & k_m & k_m & {-k_m}
-\end{bmatrix}}_{\mathbf{A}_{\mathrm{alloc}}}
-\begin{bmatrix} f_1 \\ f_2 \\ f_3 \\ f_4 \end{bmatrix}
-```
-
-The rows hold the rotor lever arms in metres. rank(<b>A</b><sub>alloc</sub>) = 4 and its condition
-number is 62.6, so every feasible pair (<i>T</i>, <b>τ</b>) maps to exactly one set of rotor thrusts. The large
-condition number comes from the small yaw arm <i>k</i><sub><i>m</i></sub>: yaw is the weakest axis, which is why the controllers limit the
-yaw rate.
-
 ### 6.3 Linearisation and controllability
 
 With state <b>x</b> = [<i>x</i>, <i>y</i>, <i>z</i>, <i>v</i><sub><i>x</i></sub>, <i>v</i><sub><i>y</i></sub>, <i>v</i><sub><i>z</i></sub>, <i>φ</i>, <i>θ</i>, <i>ψ</i>, <i>p</i>, <i>q</i>, <i>r</i>]<sup>T</sup> (position, velocity, roll, pitch,
@@ -435,7 +398,7 @@ limit <i>v</i><sub>lim</sub> is enforced without changing PX4 by never placing t
 $$
 \mathbf{p}_{\mathrm{cmd},xy} =
 \begin{cases}
-\mathbf{p}_{\mathrm{mission},xy}, & \lVert \mathbf{e}_{xy} \rVert \le v_{\mathrm{lim}}/K_p \\[4pt]
+\mathbf{p}_{\mathrm{mission},xy}, & \lVert \mathbf{e}_{xy} \rVert \le v_{\mathrm{lim}}/K_p \\
 \mathbf{p}_{xy} + \dfrac{v_{\mathrm{lim}}/K_p}{\lVert \mathbf{e}_{xy} \rVert}\,\mathbf{e}_{xy}, & \text{otherwise}
 \end{cases}
 \qquad
