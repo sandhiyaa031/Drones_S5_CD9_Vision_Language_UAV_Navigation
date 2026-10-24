@@ -527,10 +527,6 @@ rounded up) and the safety radius is <i>r</i><sub><i>s</i></sub> = <i>r</i><sub>
    horizontally or 2.5 m/s vertically, or enters a structure.
 4. **Cost:** the cheapest feasible candidate is proposed:
 
-$$
-J = w_{\mathrm{risk}}\,\mathrm{risk} + w_{\mathrm{dist}}\,\mathrm{deviation} + w_{\mathrm{energy}}\,\mathrm{effort}
-  + w_{\mathrm{smooth}}\,\mathrm{change} + w_{\mathrm{alt}}\,\Delta h
-$$
 
 | Term | Definition | Weight |
 |---|---|---|
