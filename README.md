@@ -266,14 +266,17 @@ through the rotor geometry:
 $$
 \begin{bmatrix} T \\ \tau_x \\ \tau_y \\ \tau_z \end{bmatrix}
 =
+```math
+\begin{bmatrix} T \\ \tau_x \\ \tau_y \\ \tau_z \end{bmatrix}
+=
 \underbrace{\begin{bmatrix}
 1 & 1 & 1 & 1 \\
-0.22 & -0.22 & 0.20 & -0.20 \\
--0.13 & -0.13 & 0.13 & 0.13 \\
--k_m & k_m & k_m & -k_m
+0.22 & {-0.22} & 0.20 & {-0.20} \\
+{-0.13} & {-0.13} & 0.13 & 0.13 \\
+{-k_m} & k_m & k_m & {-k_m}
 \end{bmatrix}}_{\mathbf{A}_{\mathrm{alloc}}}
 \begin{bmatrix} f_1 \\ f_2 \\ f_3 \\ f_4 \end{bmatrix}
-$$
+```
 
 The rows hold the rotor lever arms in metres. rank(<b>A</b><sub>alloc</sub>) = 4 and its condition
 number is 62.6, so every feasible pair (<i>T</i>, <b>τ</b>) maps to exactly one set of rotor thrusts. The large
