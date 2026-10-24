@@ -589,12 +589,6 @@ lidar. `slam_bridge` levels each scan with the vehicle attitude and keeps only r
 **A\* planning** [[6]](#ref-6) (`navigation.py`) runs on a 0.5 m grid built from the SLAM map. With <i>c</i><sub><i>i</i></sub> the clearance
 of cell <i>i</i> to the nearest mapped obstacle:
 
-$$
-\text{cost}_i = 1 + w_c\,\mathrm{clip}\left(1 - \frac{c_i - r_{\mathrm{inf}}}{r_{\mathrm{caution}} - r_{\mathrm{inf}}},\ 0,\ 1\right)\Big|_{c_i < r_{\mathrm{caution}}}
-+ c_{\mathrm{unknown}}\Big|_{i\ \text{unobserved}},
-\qquad
-g(\text{route}) = \sum_{\text{steps}} \text{cost}_i \times \text{step length}
-$$
 
 | Symbol | Meaning | Value |
 |---|---|---|
