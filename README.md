@@ -20,9 +20,6 @@
 
 ---
 
-
-
-
 ## Table of Contents
 
 1. [Overview](#1-overview)
@@ -40,7 +37,6 @@
 13. [Testing](#13-testing)
 14. [Metric Definitions](#14-metric-definitions)
 15. [References](#15-references)
-16. [License](#16-license)
 
 ---
 
@@ -232,8 +228,8 @@ implemented model).
 | Sensor | X along the optical axis, Y image-left, Z image-up | both cameras |
 
 Bold lower-case symbols are column vectors and bold upper-case symbols are matrices. In the PX4 local frame a higher
-altitude means a *more negative* $`z`$. $`\mathbf{R}`$ always denotes the body-to-local rotation matrix and
-$`\mathbf{e}_z = (0, 0, 1)^\top`$.
+altitude means a *more negative* <i>z</i>. <b>R</b> always denotes the body-to-local rotation matrix and
+<b>e</b><sub><i>z</i></sub> = (0, 0, 1)<sup>T</sup>.
 
 ### 6.2 Vehicle model and control allocation
 
@@ -241,14 +237,14 @@ The x500 parameters come from the PX4 `x500` model and are used identically in M
 
 | Quantity | Symbol | Value |
 |---|---|---|
-| Mass | $`m`$ | 2.064 kg |
-| Inertia | $`J_{xx}, J_{yy}, J_{zz}`$ | 0.02167, 0.02167, 0.040 kg·m² |
-| Rotor thrust constant | $`k_f`$ | $`8.54858 \times 10^{-6}`$ N/(rad/s)², $`\omega_{\max} = 1000`$ rad/s |
-| Maximum thrust | $`T_{\max}`$ | 8.55 N per rotor, 34.2 N total |
-| Weight | $`mg`$ | 20.25 N (hover needs 59 % of $`T_{\max}`$) |
-| Thrust-to-weight ratio | $`T_{\max}/mg`$ | 1.69 |
+| Mass | <i>m</i> | 2.064 kg |
+| Inertia | <i>J</i><sub><i>x</i><i>x</i></sub>, <i>J</i><sub><i>y</i><i>y</i></sub>, <i>J</i><sub><i>z</i><i>z</i></sub> | 0.02167, 0.02167, 0.040 kg·m² |
+| Rotor thrust constant | <i>k</i><sub><i>f</i></sub> | 8.54858 × 10<sup>−6</sup> N/(rad/s)², <i>ω</i><sub>max</sub> = 1000 rad/s |
+| Maximum thrust | <i>T</i><sub>max</sub> | 8.55 N per rotor, 34.2 N total |
+| Weight | <i>m</i><i>g</i> | 20.25 N (hover needs 59 % of <i>T</i><sub>max</sub>) |
+| Thrust-to-weight ratio | <i>T</i><sub>max</sub>/<i>m</i><i>g</i> | 1.69 |
 | Motor time constant | | 0.0125 s spin-up, 0.025 s spin-down |
-| Reaction-torque coefficient | $`k_m`$ | 0.016 m |
+| Reaction-torque coefficient | <i>k</i><sub><i>m</i></sub> | 0.016 m |
 
 **Rigid-body dynamics [background]** (world frame, z up):
 
@@ -260,11 +256,11 @@ m\,\ddot{\mathbf{p}} = -m g\,\mathbf{e}_z + T\,\mathbf{R}\,\mathbf{e}_z,
 \dot{\mathbf{R}} = \mathbf{R}\,[\boldsymbol{\omega}]_{\times}
 ```
 
-where $`\mathbf{p}`$ is the position, $`g = 9.81\ \mathrm{m/s^2}`$, $`T`$ the total thrust along the body z axis,
-$`\mathbf{J} = \mathrm{diag}(J_{xx}, J_{yy}, J_{zz})`$ the inertia matrix, $`\boldsymbol{\omega}`$ the body angular rate,
-$`\boldsymbol{\tau}`$ the body torque, and $`[\boldsymbol{\omega}]_{\times}`$ the skew-symmetric matrix of $`\boldsymbol{\omega}`$.
+where <b>p</b> is the position, <i>g</i> = 9.81 m/s<sup>2</sup>, <i>T</i> the total thrust along the body z axis,
+<b>J</b> = diag(<i>J</i><sub><i>x</i><i>x</i></sub>, <i>J</i><sub><i>y</i><i>y</i></sub>, <i>J</i><sub><i>z</i><i>z</i></sub>) the inertia matrix, <b>ω</b> the body angular rate,
+<b>τ</b> the body torque, and [<b>ω</b>]<sub>×</sub> the skew-symmetric matrix of <b>ω</b>.
 
-**Control allocation.** The four rotor thrusts $`f_1, \dots, f_4`$ map to the collective thrust and the three body torques
+**Control allocation.** The four rotor thrusts <i>f</i><sub>1</sub>, …, <i>f</i><sub>4</sub> map to the collective thrust and the three body torques
 through the rotor geometry:
 
 ```math
@@ -279,16 +275,16 @@ through the rotor geometry:
 \begin{bmatrix} f_1 \\ f_2 \\ f_3 \\ f_4 \end{bmatrix}
 ```
 
-The rows hold the rotor lever arms in metres. $`\mathrm{rank}(\mathbf{A}_{\mathrm{alloc}}) = 4`$ and its condition
-number is 62.6, so every feasible pair $`(T, \boldsymbol{\tau})`$ maps to exactly one set of rotor thrusts. The large
-condition number comes from the small yaw arm $`k_m`$: yaw is the weakest axis, which is why the controllers limit the
+The rows hold the rotor lever arms in metres. rank(<b>A</b><sub>alloc</sub>) = 4 and its condition
+number is 62.6, so every feasible pair (<i>T</i>, <b>τ</b>) maps to exactly one set of rotor thrusts. The large
+condition number comes from the small yaw arm <i>k</i><sub><i>m</i></sub>: yaw is the weakest axis, which is why the controllers limit the
 yaw rate.
 
 ### 6.3 Linearisation and controllability
 
-With state $`\mathbf{x} = [x, y, z, v_x, v_y, v_z, \phi, \theta, \psi, p, q, r]^\top`$ (position, velocity, roll, pitch,
-yaw and body rates) and input $`\mathbf{u} = [\Delta T, \tau_x, \tau_y, \tau_z]^\top`$, the small-angle model about hover
-($`T = mg`$) is
+With state <b>x</b> = [<i>x</i>, <i>y</i>, <i>z</i>, <i>v</i><sub><i>x</i></sub>, <i>v</i><sub><i>y</i></sub>, <i>v</i><sub><i>z</i></sub>, <i>φ</i>, <i>θ</i>, <i>ψ</i>, <i>p</i>, <i>q</i>, <i>r</i>]<sup>T</sup> (position, velocity, roll, pitch,
+yaw and body rates) and input <b>u</b> = [<i>Δ</i><i>T</i>, <i>τ</i><sub><i>x</i></sub>, <i>τ</i><sub><i>y</i></sub>, <i>τ</i><sub><i>z</i></sub>]<sup>T</sup>, the small-angle model about hover
+(<i>T</i> = <i>m</i><i>g</i>) is
 
 ```math
 \dot{x} = v_x,\quad \dot{y} = v_y,\quad \dot{z} = v_z,\quad
@@ -300,11 +296,11 @@ yaw and body rates) and input $`\mathbf{u} = [\Delta T, \tau_x, \tau_y, \tau_z]^
 \dot{p} = \frac{\tau_x}{J_{xx}},\quad \dot{q} = \frac{\tau_y}{J_{yy}},\quad \dot{r} = \frac{\tau_z}{J_{zz}},
 ```
 
-that is $`\dot{\mathbf{x}} = \mathbf{A}\mathbf{x} + \mathbf{B}\mathbf{u}`$, where $`\Delta T`$ is the thrust deviation from
-hover. Each horizontal axis is a fourth-order chain (torque → rate → angle → acceleration $`g\theta`$ → velocity →
+that is <b>ẋ</b> = <b>A</b><b>x</b> + <b>B</b><b>u</b>, where <i>Δ</i><i>T</i> is the thrust deviation from
+hover. Each horizontal axis is a fourth-order chain (torque → rate → angle → acceleration <i>g</i><i>θ</i> → velocity →
 position).
 
-Two standard tests were applied, the Kalman rank test and the Popov–Belevitch–Hautus (PBH) test [[8]](#ref-8), where $`n`$ is the number of states:
+Two standard tests were applied, the Kalman rank test and the Popov–Belevitch–Hautus (PBH) test [[8]](#ref-8), where <i>n</i> is the number of states:
 
 ```math
 \text{Kalman:}\ \mathrm{rank}\big[\mathbf{B}\ \ \mathbf{A}\mathbf{B}\ \ \mathbf{A}^2\mathbf{B}\ \cdots\ \mathbf{A}^{n-1}\mathbf{B}\big] = n,
@@ -314,19 +310,19 @@ Two standard tests were applied, the Kalman rank test and the Popov–Belevitch�
 
 | Model | States | Inputs | Kalman rank | PBH rank | Result |
 |---|---|---|---|---|---|
-| Rigid body, $`\mathbf{u} = [\Delta T, \tau_x, \tau_y, \tau_z]`$ | 12 | 4 | 12 | 12 | controllable |
-| Rigid body, $`\mathbf{u}`$ = 4 rotor thrusts through $`\mathbf{A}_{\mathrm{alloc}}`$ | 12 | 4 | 12 | 12 | controllable |
+| Rigid body, <b>u</b> = [<i>Δ</i><i>T</i>, <i>τ</i><sub><i>x</i></sub>, <i>τ</i><sub><i>y</i></sub>, <i>τ</i><sub><i>z</i></sub>] | 12 | 4 | 12 | 12 | controllable |
+| Rigid body, <b>u</b> = 4 rotor thrusts through <b>A</b><sub>alloc</sub> | 12 | 4 | 12 | 12 | controllable |
 | Rigid body + first-order motor lag | 16 | 4 | 4 \* | 16 | controllable |
-| Horizontal chain $`[x, v_x, \theta, q]`$, $`u = \tau_y`$ | 4 | 1 | 4 | 4 | controllable |
+| Horizontal chain [<i>x</i>, <i>v</i><sub><i>x</i></sub>, <i>θ</i>, <i>q</i>], <i>u</i> = <i>τ</i><sub><i>y</i></sub> | 4 | 1 | 4 | 4 | controllable |
 | Counter-example: thrust only, no torques | 12 | 1 | 2 | 9 | **not controllable** |
 
-\* The 16-state Kalman matrix contains powers of the 80 s⁻¹ motor pole up to $`80^{15} \approx 3.5 \times 10^{28}`$,
+\* The 16-state Kalman matrix contains powers of the 80 s⁻¹ motor pole up to 80<sup>15</sup> ≈ 3.5 × 10<sup>28</sup>,
 which swamp the other columns, so the numerical rank is understated. The PBH test, which stays numerically reliable,
 shows full rank, as expected: an invertible first-order lag in front of a controllable system keeps it controllable.
 
 **Interpretation.** With four independent rotors the linearised x500 can reach any position, velocity, attitude and
 rate, even though it has no direct horizontal actuator: horizontal motion is reached *through attitude*. The
-counter-example shows why torques are essential: thrust alone moves only $`z`$ and $`v_z`$. Controllability holds for the
+counter-example shows why torques are essential: thrust alone moves only <i>z</i> and <i>v</i><sub><i>z</i></sub>. Controllability holds for the
 linear model at hover only. It says nothing about stability (§6.4), large angles, or saturation of the 1.69
 thrust-to-weight ratio.
 
@@ -336,13 +332,13 @@ thrust-to-weight ratio.
 
 | Loop | Law | PX4 parameters |
 |---|---|---|
-| Position | $`\mathbf{v}_{sp} = K_p(\mathbf{p}_{sp} - \mathbf{p})`$ | `MPC_XY_P` = 0.95, `MPC_Z_P` = 1.0 |
+| Position | <b>v</b><sub><i>s</i><i>p</i></sub> = <i>K</i><sub><i>p</i></sub>(<b>p</b><sub><i>s</i><i>p</i></sub> − <b>p</b>) | `MPC_XY_P` = 0.95, `MPC_Z_P` = 1.0 |
 | Velocity | PID → acceleration and thrust vector | `MPC_XY_VEL_P/I/D_ACC` = 1.8 / 0.4 / 0.2 |
 | Attitude | P on the quaternion error | `MC_ROLL_P` = `MC_PITCH_P` = 4.0, `MC_YAW_P` = 2.8 |
 | Body rate | PID | `MC_ROLLRATE_P/I/D` = 0.15 / 0.2 / 0.003 |
 | Limits | | 12 m/s horizontal, 3 m/s up, 1.5 m/s down, 45° tilt |
 
-Here $`\mathbf{p}_{sp}`$ is the position setpoint, $`\mathbf{v}_{sp}`$ the resulting velocity setpoint, and $`K_p`$ the
+Here <b>p</b><sub><i>s</i><i>p</i></sub> is the position setpoint, <b>v</b><sub><i>s</i><i>p</i></sub> the resulting velocity setpoint, and <i>K</i><sub><i>p</i></sub> the
 position gain.
 
 **Fitted PX4 response model.** For the debris planner (§6.10), PX4's horizontal response was fitted to recorded flights
@@ -352,8 +348,8 @@ position gain.
 \dot{a} = \frac{\mathrm{clip}\big(k_v\,(\mathrm{clip}(k_p\,e,\ v_{\max}) - v),\ a_{\max}\big) - a}{\tau}
 ```
 
-with position error $`e`$, velocity $`v`$, acceleration $`a`$, attitude lag $`\tau = 0.493`$ s, $`k_p = 0.827\ \mathrm{s^{-1}}`$,
-$`k_v = 3.203\ \mathrm{s^{-1}}`$ and $`a_{\max} = 11.08\ \mathrm{m/s^2}`$. Without saturation, the closed loop has the
+with position error <i>e</i>, velocity <i>v</i>, acceleration <i>a</i>, attitude lag <i>τ</i> = 0.493 s, <i>k</i><sub><i>p</i></sub> = 0.827 s<sup>−1</sup>,
+<i>k</i><sub><i>v</i></sub> = 3.203 s<sup>−1</sup> and <i>a</i><sub>max</sub> = 11.08 m/s<sup>2</sup>. Without saturation, the closed loop has the
 characteristic polynomial
 
 ```math
@@ -425,13 +421,13 @@ stateDiagram-v2
 \end{cases}
 ```
 
-An avoidance proposal $`\mathbf{p}_{\mathrm{avoid}}`$ is accepted only if it is younger than 0.5 s, finite, at most
+An avoidance proposal <b>p</b><sub>avoid</sub> is accepted only if it is younger than 0.5 s, finite, at most
 6 m from the vehicle, and between 1.5 m and 15 m above the takeoff point (`avoidance_interface.py`). While it is active,
 the mission step's timers are frozen.
 
-**Speed cap through the setpoint.** PX4's position loop commands $`\mathbf{v} = K_p\,\mathbf{e}`$, so a horizontal speed
-limit $`v_{\mathrm{lim}}`$ is enforced without changing PX4 by never placing the setpoint further than
-$`v_{\mathrm{lim}}/K_p`$ ahead of the vehicle:
+**Speed cap through the setpoint.** PX4's position loop commands <b>v</b> = <i>K</i><sub><i>p</i></sub>&#8201;<b>e</b>, so a horizontal speed
+limit <i>v</i><sub>lim</sub> is enforced without changing PX4 by never placing the setpoint further than
+<i>v</i><sub>lim</sub>/<i>K</i><sub><i>p</i></sub> ahead of the vehicle:
 
 ```math
 \mathbf{p}_{\mathrm{cmd},xy} =
@@ -443,15 +439,15 @@ $`v_{\mathrm{lim}}/K_p`$ ahead of the vehicle:
 \mathbf{e}_{xy} = \mathbf{p}_{\mathrm{mission},xy} - \mathbf{p}_{xy}
 ```
 
-where $`\mathbf{p}_{xy}`$ is the current horizontal position and $`K_p = 0.95\ \mathrm{s^{-1}}`$ is PX4's `MPC_XY_P`. The cap
+where <b>p</b><sub><i>x</i><i>y</i></sub> is the current horizontal position and <i>K</i><sub><i>p</i></sub> = 0.95 s<sup>−1</sup> is PX4's `MPC_XY_P`. The cap
 is the minimum of the transit limit, the search speed (2.0 m/s; inspection 1.5 m/s; never above 3.0 m/s), and any lower
 cap the debris planner requests when perception degrades (never below 0.5 m/s). Search goals are accepted only if
 younger than 1.0 s and within 25 m of home (`search_interface.py`).
 
 ### 6.6 Debris detection
 
-**Camera model** (`debris_detection.py`; pinhole, no distortion). A point $`(X, Y, Z)`$ in the sensor frame projects to
-pixel $`(u, v)`$, and a pixel with axial depth $`d`$ back-projects to $`\mathbf{p}_s`$:
+**Camera model** (`debris_detection.py`; pinhole, no distortion). A point (<i>X</i>, <i>Y</i>, <i>Z</i>) in the sensor frame projects to
+pixel (<i>u</i>, <i>v</i>), and a pixel with axial depth <i>d</i> back-projects to <b>p</b><sub><i>s</i></sub>:
 
 ```math
 u = c_x - f_x\frac{Y}{X},\qquad v = c_y - f_y\frac{Z}{X},\qquad
@@ -459,19 +455,19 @@ f_x = f_y = \frac{W/2}{\tan(\mathrm{HFOV}/2)},\qquad
 \mathbf{p}_s = \Big(d,\ -\frac{(u - c_x)\,d}{f_x},\ -\frac{(v - c_y)\,d}{f_y}\Big)
 ```
 
-where $`(c_x, c_y)`$ is the principal point and $`W`$ the image width. For the upward depth camera ($`W = 640`$,
-HFOV = 100°) this gives $`f = 268.51`$ px; for the downward camera ($`W = 1280`$, HFOV = 1.74 rad), $`f = 539.9`$ px.
+where (<i>c</i><sub><i>x</i></sub>, <i>c</i><sub><i>y</i></sub>) is the principal point and <i>W</i> the image width. For the upward depth camera (<i>W</i> = 640,
+HFOV = 100°) this gives <i>f</i> = 268.51 px; for the downward camera (<i>W</i> = 1280, HFOV = 1.74 rad), <i>f</i> = 539.9 px.
 
 The point is moved to the body frame (sensor 0.15 m above `base_link`) and then to the PX4 local frame with the attitude
-quaternion $`\mathbf{q}`$ and position $`\mathbf{p}_{\mathrm{uav}}`$ **interpolated to the image timestamp**:
-$`\mathbf{p}_{\mathrm{NED}} = \mathbf{R}(\mathbf{q})\,\mathbf{p}_{\mathrm{FRD}} + \mathbf{p}_{\mathrm{uav}}`$.
+quaternion <b>q</b> and position <b>p</b><sub>uav</sub> **interpolated to the image timestamp**:
+<b>p</b><sub>NED</sub> = <b>R</b>(<b>q</b>)&#8201;<b>p</b><sub>FRD</sub> + <b>p</b><sub>uav</sub>.
 Valid pixels (depth 0.5–35 m) are grouped into 8-connected components, split at depth jumps over 0.30 m, gated by size,
 and filtered against static structure.
 
 ### 6.7 Debris tracking
 
 `debris_tracking.py` runs one Kalman filter [[5]](#ref-5) per object with state
-$`\mathbf{x} = [p_x, p_y, p_z, v_x, v_y, v_z]^\top`$ in the local NED frame. Gravity is a known input, not a state:
+<b>x</b> = [<i>p</i><sub><i>x</i></sub>, <i>p</i><sub><i>y</i></sub>, <i>p</i><sub><i>z</i></sub>, <i>v</i><sub><i>x</i></sub>, <i>v</i><sub><i>y</i></sub>, <i>v</i><sub><i>z</i></sub>]<sup>T</sup> in the local NED frame. Gravity is a known input, not a state:
 
 ```math
 \mathbf{x}^- = \mathbf{F}\mathbf{x} + \mathbf{B}g,\qquad
@@ -490,12 +486,12 @@ $`\mathbf{x} = [p_x, p_y, p_z, v_x, v_y, v_z]^\top`$ in the local NED frame. Gra
 
 | Symbol | Meaning | Value |
 |---|---|---|
-| $`\Delta t`$ | difference of consecutive sensor timestamps | measured, not assumed |
-| $`g`$ | gravity (down is $`+z`$ in NED) | 9.8 m/s² |
-| $`\mathbf{Q}`$ | process noise from white-noise acceleration (below) | $`\sigma_a = 3`$ m/s² |
-| $`\mathbf{z},\ \mathbf{H}`$ | measured centroid of the visible surface, $`\mathbf{H} = [\mathbf{I}_3\ \ \mathbf{0}]`$ | |
-| $`\mathbf{R}_m`$ | measurement noise $`\sigma_m^2\mathbf{I}_3`$ | $`\sigma_m`$ = 0.10 m (0.30 m when cut by the image border) |
-| $`\mathbf{y},\ \mathbf{S},\ \mathbf{K}`$ | innovation, its covariance, Kalman gain | |
+| <i>Δ</i><i>t</i> | difference of consecutive sensor timestamps | measured, not assumed |
+| <i>g</i> | gravity (down is +<i>z</i> in NED) | 9.8 m/s² |
+| <b>Q</b> | process noise from white-noise acceleration (below) | <i>σ</i><sub><i>a</i></sub> = 3 m/s² |
+| <b>z</b>, <b>H</b> | measured centroid of the visible surface, <b>H</b> = [<b>I</b><sub>3</sub>  <b>0</b>] | |
+| <b>R</b><sub><i>m</i></sub> | measurement noise <i>σ</i><sub><i>m</i></sub><sup>2</sup><b>I</b><sub>3</sub> | <i>σ</i><sub><i>m</i></sub> = 0.10 m (0.30 m when cut by the image border) |
+| <b>y</b>, <b>S</b>, <b>K</b> | innovation, its covariance, Kalman gain | |
 
 For each axis, the process noise block acting on (position, velocity) is
 
@@ -505,13 +501,13 @@ For each axis, the process noise block acting on (position, velocity) is
 
 **Association.** Detections are matched to tracks by the Hungarian algorithm [[7]](#ref-7)
 (`scipy.optimize.linear_sum_assignment`) on the Mahalanobis cost
-$`c_{ij} = \mathbf{y}_{ij}^\top \mathbf{S}_{ij}^{-1}\mathbf{y}_{ij}`$. A pair is allowed only if $`c_{ij} < 16.27`$ (the
-99.9 % $`\chi^2`$ quantile with 3 degrees of freedom). A track is confirmed after 3 measurements spanning at least 0.10 m,
+<i>c</i><sub><i>i</i><i>j</i></sub> = <b>y</b><sub><i>i</i><i>j</i></sub><sup>T</sup> <b>S</b><sub><i>i</i><i>j</i></sub><sup>−1</sup><b>y</b><sub><i>i</i><i>j</i></sub>. A pair is allowed only if <i>c</i><sub><i>i</i><i>j</i></sub> < 16.27 (the
+99.9 % <i>χ</i><sup>2</sup> quantile with 3 degrees of freedom). A track is confirmed after 3 measurements spanning at least 0.10 m,
 and deleted after 6 missed frames or 1.0 s.
 
 ### 6.8 Trajectory prediction
 
-`debris_prediction.py` propagates each track ballistically to horizons $`h \in \lbrace 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0 \rbrace`$ s:
+`debris_prediction.py` propagates each track ballistically to horizons <i>h</i> ∈ { 0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0 } s:
 
 ```math
 \mathbf{p}(t + h) = \mathbf{p} + \mathbf{v}\,h + \tfrac{1}{2}\,\mathbf{a}\,h^2,\qquad
@@ -519,14 +515,14 @@ and deleted after 6 missed frames or 1.0 s.
 \mathbf{P}(h) = \mathbf{F}(h)\,\mathbf{P}\,\mathbf{F}(h)^\top + \mathbf{Q}(h)
 ```
 
-with $`\mathbf{a} = (0, 0, g)`$ for the default ballistic model. Constant-velocity ($`\mathbf{a} = \mathbf{0}`$) and
+with <b>a</b> = (0, 0, <i>g</i>) for the default ballistic model. Constant-velocity (<b>a</b> = <b>0</b>) and
 constant-acceleration (least-squares slope of the track's velocity over 0.4 s) models are implemented for comparison
-but not used, because a constant-velocity prediction of a falling body is wrong by exactly $`\tfrac{1}{2} g h^2`$ in
-position (4.9 m at $`h`$ = 1 s). Drag, bounce and sliding are not modelled.
+but not used, because a constant-velocity prediction of a falling body is wrong by exactly ½&#8201;<i>g</i><i>h</i><sup>2</sup> in
+position (4.9 m at <i>h</i> = 1 s). Drag, bounce and sliding are not modelled.
 
 ### 6.9 Collision risk
 
-`debris_risk.py` evaluates the relative position $`\mathbf{r}(h) = \mathbf{p}_{\mathrm{debris}}(t + h) - \mathbf{p}_{\mathrm{uav}}(t + h)`$,
+`debris_risk.py` evaluates the relative position <b>r</b>(<i>h</i>) = <b>p</b><sub>debris</sub>(<i>t</i> + <i>h</i>) − <b>p</b><sub>uav</sub>(<i>t</i> + <i>h</i>),
 with the UAV extrapolated at constant velocity, every 0.01 s up to 2 s:
 
 ```math
@@ -536,20 +532,20 @@ t_{ca} = \arg\min_{h}\ \lVert \mathbf{r}(h) \rVert,\qquad
 d_{\mathrm{cons}} = d_{\min} - \min\big(\sigma_r,\ 0.10 + 0.40\,t_{ca}\big)
 ```
 
-where $`\mathbf{u} = \mathbf{r}/\lVert\mathbf{r}\rVert`$ at closest approach and $`\mathbf{P}_{\mathrm{pos}}`$ is the
-predicted position covariance. The cap $`0.10 + 0.40\,t_{ca}`$ (metres) is an envelope fitted to the measured prediction
+where <b>u</b> = <b>r</b>/‖<b>r</b>‖ at closest approach and <b>P</b><sub>pos</sub> is the
+predicted position covariance. The cap 0.10 + 0.40&#8201;<i>t</i><sub><i>c</i><i>a</i></sub> (metres) is an envelope fitted to the measured prediction
 error, because the filter covariance is too wide at long horizons.
 
-With debris radius $`\rho = 0.71 \times`$ box size, the contact radius is $`r_c = 0.40 + \rho`$ (the x500 arm plus propeller,
-rounded up) and the safety radius is $`r_s = r_c + 0.30`$ m (0.68 m and 0.98 m for a 0.4 m box).
+With debris radius <i>ρ</i> = 0.71 × box size, the contact radius is <i>r</i><sub><i>c</i></sub> = 0.40 + <i>ρ</i> (the x500 arm plus propeller,
+rounded up) and the safety radius is <i>r</i><sub><i>s</i></sub> = <i>r</i><sub><i>c</i></sub> + 0.30 m (0.68 m and 0.98 m for a 0.4 m box).
 
 | State | Condition |
 |---|---|
-| CRITICAL | $`d_{\min} < r_c`$, or $`d_{\min} < r_s`$ with $`t_{ca} \le 0.75`$ s |
-| WARNING | $`d_{\min} < r_s`$ with $`t_{ca} > 0.75`$ s |
-| WATCH | $`d_{\mathrm{cons}} < r_s`$ |
+| CRITICAL | <i>d</i><sub>min</sub> < <i>r</i><sub><i>c</i></sub>, or <i>d</i><sub>min</sub> < <i>r</i><sub><i>s</i></sub> with <i>t</i><sub><i>c</i><i>a</i></sub> ≤ 0.75 s |
+| WARNING | <i>d</i><sub>min</sub> < <i>r</i><sub><i>s</i></sub> with <i>t</i><sub><i>c</i><i>a</i></sub> > 0.75 s |
+| WATCH | <i>d</i><sub>cons</sub> < <i>r</i><sub><i>s</i></sub> |
 | SAFE | otherwise |
-| POTENTIAL_THREAT | unconfirmed track faster than 2 m/s whose free-fall path enters $`r_s`$ |
+| POTENTIAL_THREAT | unconfirmed track faster than 2 m/s whose free-fall path enters <i>r</i><sub><i>s</i></sub> |
 
 ### 6.10 Debris avoidance planning
 
@@ -558,10 +554,10 @@ rounded up) and the safety radius is $`r_s = r_c + 0.30`$ m (0.68 m and 0.98 m f
 1. **Candidates:** hold; 8 horizontal directions × {2.5 m, 4.0 m}; climb 2.0 m; descend 1.0 m; plus the setpoint
    currently flown.
 2. **Roll-out:** each candidate is simulated for 2 s at 20 ms steps through the fitted response model of §6.4
-   (horizontal: $`\tau`$ = 0.493 s, $`k_p`$ = 0.827, $`k_v`$ = 3.203, $`a_{\max}`$ = 11.08 m/s²; vertical: $`\tau`$ = 0.02 s,
-   $`k_p`$ = 1.181, $`k_v`$ = 12.0, $`a_{\max}`$ = 6.75 m/s²).
+   (horizontal: <i>τ</i> = 0.493 s, <i>k</i><sub><i>p</i></sub> = 0.827, <i>k</i><sub><i>v</i></sub> = 3.203, <i>a</i><sub>max</sub> = 11.08 m/s²; vertical: <i>τ</i> = 0.02 s,
+   <i>k</i><sub><i>p</i></sub> = 1.181, <i>k</i><sub><i>v</i></sub> = 12.0, <i>a</i><sub>max</sub> = 6.75 m/s²).
 3. **Hard constraints:** a candidate is rejected if at any sampled time its separation from any predicted debris path
-   is below $`r_s + \text{margin}(t) + 0.25`$ m (the model error), or it leaves 1.5–12 m altitude, exceeds 5.0 m/s
+   is below <i>r</i><sub><i>s</i></sub> + margin(<i>t</i>) + 0.25 m (the model error), or it leaves 1.5–12 m altitude, exceeds 5.0 m/s
    horizontally or 2.5 m/s vertically, or enters a structure.
 4. **Cost:** the cheapest feasible candidate is proposed:
 
@@ -572,11 +568,11 @@ J = w_{\mathrm{risk}}\,\mathrm{risk} + w_{\mathrm{dist}}\,\mathrm{deviation} + w
 
 | Term | Definition | Weight |
 |---|---|---|
-| $`\mathrm{risk}`$ | $`\mathrm{clip}(1 - c/1.5\ \mathrm{m},\ 0,\ 1)`$, where $`c`$ is the smallest clearance (separation minus requirement) | $`w_{\mathrm{risk}}`$ = 10 |
-| $`\mathrm{deviation}`$ | distance of the setpoint from the nominal path (m) | $`w_{\mathrm{dist}}`$ = 1.0 |
-| $`\mathrm{effort}`$ | distance of the setpoint from the present position (m) | $`w_{\mathrm{energy}}`$ = 0.5 |
-| $`\mathrm{change}`$ | distance from the setpoint currently flown (m) | $`w_{\mathrm{smooth}}`$ = 0.5 |
-| $`\Delta h`$ | difference between setpoint and mission altitude (m) | $`w_{\mathrm{alt}}`$ = 0.5 |
+| risk | clip(1 − <i>c</i>/1.5 m, 0, 1), where <i>c</i> is the smallest clearance (separation minus requirement) | <i>w</i><sub>risk</sub> = 10 |
+| deviation | distance of the setpoint from the nominal path (m) | <i>w</i><sub>dist</sub> = 1.0 |
+| effort | distance of the setpoint from the present position (m) | <i>w</i><sub>energy</sub> = 0.5 |
+| change | distance from the setpoint currently flown (m) | <i>w</i><sub>smooth</sub> = 0.5 |
+| <i>Δ</i><i>h</i> | difference between setpoint and mission altitude (m) | <i>w</i><sub>alt</sub> = 0.5 |
 
 The planner's state machine is NORMAL_FLIGHT → PREPARE_AVOIDANCE → AVOIDING → CLEARING → RESUME_MISSION (plus DEFENSIVE
 and AVOIDANCE_FAILSAFE). The result is only a *proposal*: `flight_controller` validates it (§6.5).
@@ -584,8 +580,8 @@ and AVOIDANCE_FAILSAFE). The result is only a *proposal*: `flight_controller` va
 ### 6.11 Flight safety monitor
 
 `flight_safety.py` checks every PX4 position sample above 0.5 m altitude; any violation latches FAILSAFE and requests
-PX4 `NAV_LAND`. Here $`\mathbf{a}`$ is acceleration, $`\Delta\mathbf{p}`$ and $`\Delta\mathbf{v}`$ are the changes between
-samples $`\Delta t`$ apart, and $`\bar{\mathbf{v}}`$ their mean velocity:
+PX4 `NAV_LAND`. Here <b>a</b> is acceleration, <i>Δ</i><b>p</b> and <i>Δ</i><b>v</b> are the changes between
+samples <i>Δ</i><i>t</i> apart, and <b>v̄</b> their mean velocity:
 
 ```math
 \begin{aligned}
@@ -600,9 +596,9 @@ It also trips on an estimator reset, any non-finite value, or an altitude excurs
 
 ### 6.12 Coverage search planning
 
-`search_planning.py` sizes the lanes from the downward camera's ground footprint. At height $`h`$ above the plane of
-interest (flight altitude minus the 0.9 m target height), with usable-image margin $`m = 0.8`$ and image size
-$`W \times H`$, the footprint half-extents (forward $`\ell_f`$, right $`\ell_r`$) are
+`search_planning.py` sizes the lanes from the downward camera's ground footprint. At height <i>h</i> above the plane of
+interest (flight altitude minus the 0.9 m target height), with usable-image margin <i>m</i> = 0.8 and image size
+<i>W</i> × <i>H</i>, the footprint half-extents (forward <i>ℓ</i><sub><i>f</i></sub>, right <i>ℓ</i><sub><i>r</i></sub>) are
 
 ```math
 (\ell_f,\ \ell_r) = m\,h\left(\frac{H/2}{f_y},\ \frac{W/2}{f_x}\right),\qquad
@@ -610,10 +606,10 @@ s = 2\,\ell_{\perp}\,(1 - \omega),\qquad
 n_{\mathrm{lanes}} = \left\lceil \frac{w}{s} \right\rceil
 ```
 
-where $`\ell_\perp`$ is the across-lane half-extent, $`\omega = 0.5`$ the overlap between neighbouring swaths, $`s`$ the lane
-spacing and $`w`$ the area width. With 50 % overlap, every ground point is imaged from two lanes. A 0.5 m grid records
+where <i>ℓ</i><sub>⊥</sub> is the across-lane half-extent, <i>ω</i> = 0.5 the overlap between neighbouring swaths, <i>s</i> the lane
+spacing and <i>w</i> the area width. With 50 % overlap, every ground point is imaged from two lanes. A 0.5 m grid records
 which cells the real footprint (from the real pose) has covered:
-$`\text{coverage} = \#\lbrace\text{cells seen}\rbrace / \#\lbrace\text{cells in the area}\rbrace`$.
+coverage = #{cells seen} / #{cells in the area}.
 
 **Inspection.** When a candidate has been observed at least 15 times, the planner leaves the lanes and flies
 **2 viewpoints, 90° apart, 2–4 m from the candidate and about 35° off nadir**, at 1.5 m/s. These oblique views give the
@@ -624,8 +620,8 @@ VLM a complete side view (it rejects straight-down crops) and give the localiser
 **SLAM.** `slam_toolbox` [[2]](#ref-2) builds a 2-D pose-graph map with scan matching and loop closure from the planar
 lidar. `slam_bridge` levels each scan with the vehicle attitude and keeps only returns within the 6 m flight plane.
 
-**A\* planning** [[6]](#ref-6) (`navigation.py`) runs on a 0.5 m grid built from the SLAM map. With $`c_i`$ the clearance
-of cell $`i`$ to the nearest mapped obstacle:
+**A\* planning** [[6]](#ref-6) (`navigation.py`) runs on a 0.5 m grid built from the SLAM map. With <i>c</i><sub><i>i</i></sub> the clearance
+of cell <i>i</i> to the nearest mapped obstacle:
 
 ```math
 \text{cost}_i = 1 + w_c\,\mathrm{clip}\left(1 - \frac{c_i - r_{\mathrm{inf}}}{r_{\mathrm{caution}} - r_{\mathrm{inf}}},\ 0,\ 1\right)\Big|_{c_i < r_{\mathrm{caution}}}
@@ -636,10 +632,10 @@ g(\text{route}) = \sum_{\text{steps}} \text{cost}_i \times \text{step length}
 
 | Symbol | Meaning | Value |
 |---|---|---|
-| $`r_{\mathrm{inf}}`$ | inflation radius: cells with $`c_i < r_{\mathrm{inf}}`$ are blocked | 1.75 m |
-| $`r_{\mathrm{caution}}`$ | cells closer than this cost more | 4.0 m |
-| $`w_c`$ | caution weight | 3.0 |
-| $`c_{\mathrm{unknown}}`$ | extra cost of a never-observed cell | 0.6 |
+| <i>r</i><sub>inf</sub> | inflation radius: cells with <i>c</i><sub><i>i</i></sub> < <i>r</i><sub>inf</sub> are blocked | 1.75 m |
+| <i>r</i><sub>caution</sub> | cells closer than this cost more | 4.0 m |
+| <i>w</i><sub><i>c</i></sub> | caution weight | 3.0 |
+| <i>c</i><sub>unknown</sub> | extra cost of a never-observed cell | 0.6 |
 
 The heuristic is the Euclidean distance to the goal, and moves are 8-connected. A 3.5 m look-ahead point on the route is
 sent as the goal; the route is replanned every 1 s, and the speed drops to 1.2 m/s within 3 m of obstacles. The **return
@@ -650,7 +646,7 @@ climb-and-return under slabs caused an impact during development.
 
 1. **Candidate detector** (`survivor_detection.py`, simulation baseline): HSV masks for clothing (orange), head (skin
    tone) and legs (blue), plus a shape test, combined into a confidence
-   $`c = 0.30 + 0.35\,[\text{head}] + 0.20\,[\text{shape}] + 0.15\,[\text{legs}]`$, where $`[\cdot]`$ is 1 if the cue is
+   <i>c</i> = 0.30 + 0.35&#8201;[head] + 0.20&#8201;[shape] + 0.15&#8201;[legs], where [·] is 1 if the cue is
    present and 0 otherwise. A confidence of at least 0.55 is a strong candidate.
 2. **Temporal confirmation** (`survivor_confirmation.py`): a candidate must appear in at least 5 of the last 8 frames.
 3. **VLM** (`vlm_client.py`, Gemma 3 4B [[3]](#ref-3) through Ollama's OpenAI-compatible API): a padded crop is sent
@@ -672,8 +668,8 @@ flowchart TD
 
 ### 6.15 Survivor 3-D localisation
 
-`survivor_localization.py` estimates each survivor as a static 3-D point $`\mathbf{p}`$ with an extended Kalman filter.
-With camera centre $`\mathbf{c}`$ and rotation $`\mathbf{R}`$ taken from PX4's estimate at the image time, the point in the
+`survivor_localization.py` estimates each survivor as a static 3-D point <b>p</b> with an extended Kalman filter.
+With camera centre <b>c</b> and rotation <b>R</b> taken from PX4's estimate at the image time, the point in the
 camera body frame and the measurement model are
 
 ```math
@@ -682,17 +678,17 @@ h(\mathbf{p}) = \begin{bmatrix} c_x + f_x\,y_b / z_b \\ c_y - f_y\,x_b / z_b \en
 \mathbf{H} = \frac{\partial h}{\partial \mathbf{b}}\,\mathbf{R}^\top \in \mathbb{R}^{2 \times 3}
 ```
 
-where $`z_b`$ is the depth along the optical axis. Because the point is static, the prediction step is the identity.
-Observations whose innovation fails the 99.9 % $`\chi^2`$ gate with 2 degrees of freedom (13.8) are rejected.
+where <i>z</i><sub><i>b</i></sub> is the depth along the optical axis. Because the point is static, the prediction step is the identity.
+Observations whose innovation fails the 99.9 % <i>χ</i><sup>2</sup> gate with 2 degrees of freedom (13.8) are rejected.
 
-**Initialisation.** The first ray $`\mathbf{r}`$ is intersected with a horizontal plane at an assumed target height of
-0.9 m above the ground ($`z_{\mathrm{plane}}`$ in NED):
+**Initialisation.** The first ray <b>r</b> is intersected with a horizontal plane at an assumed target height of
+0.9 m above the ground (<i>z</i><sub>plane</sub> in NED):
 
 ```math
 \mathbf{p}_0 = \mathbf{c} + s\,\mathbf{r},\qquad s = \frac{z_{\mathrm{plane}} - c_z}{r_z}\qquad (r_z > 0,\ s > 0)
 ```
 
-The uncertainty along the ray starts large ($`\sigma`$ = 0.6 m on the height). Once the drone has moved, rays from
+The uncertainty along the ray starts large (<i>σ</i> = 0.6 m on the height). Once the drone has moved, rays from
 different viewpoints triangulate the point, and the height assumption stops mattering. The least-squares ray
 intersection solves
 
@@ -701,7 +697,7 @@ intersection solves
 = \sum_i \big(\mathbf{I} - \mathbf{r}_i\mathbf{r}_i^\top\big)\,\mathbf{c}_i
 ```
 
-and is rejected if the condition number of the left-hand matrix exceeds $`10^9`$ (nearly parallel rays). A 0.2 m
+and is rejected if the condition number of the left-hand matrix exceeds 10<sup>9</sup> (nearly parallel rays). A 0.2 m
 systematic floor is added to the reported covariance. Ground truth is never used.
 
 ### 6.16 Mission from one sentence
@@ -1262,8 +1258,8 @@ All metrics are computed offline against simulator ground truth.
 
 | Metric | Definition |
 |---|---|
-| Precision, recall, F1 | $`P = \frac{TP}{TP + FP}`$, $`R = \frac{TP}{TP + FN}`$, $`F_1 = \frac{2PR}{P + R}`$, with true positives $`TP`$, false positives $`FP`$ and false negatives $`FN`$ |
-| RMSE | $`\sqrt{\frac{1}{N}\sum_{k=1}^{N} e_k^2}`$ over $`N`$ samples of the error $`e_k`$ |
+| Precision, recall, F1 | $`P = \frac{TP}{TP + FP}`$, $`R = \frac{TP}{TP + FN}`$, $`F_1 = \frac{2PR}{P + R}`$, with true positives <i>T</i><i>P</i>, false positives <i>F</i><i>P</i> and false negatives <i>F</i><i>N</i> |
+| RMSE | $`\sqrt{\frac{1}{N}\sum_{k=1}^{N} e_k^2}`$ over <i>N</i> samples of the error <i>e</i><sub><i>k</i></sub> |
 | Debris position error | distance from the estimate to the true box surface (0 if on it) |
 | Box collision | box surface within 0.40 m of the vehicle centre (near miss: within 0.70 m) |
 | Warning lead time | first WARNING or CRITICAL frame to the true closest approach |
@@ -1324,7 +1320,6 @@ All metrics are computed offline against simulator ground truth.
 - <a id="ref-24"></a>**[24]** `pyulog` (PX4 ULog parser). <https://github.com/PX4/pyulog>
 
 ---
-
 
 <div align="center">
 
