@@ -21,6 +21,8 @@
 ---
 
 
+
+
 ## Table of Contents
 
 1. [Overview](#1-overview)
@@ -277,7 +279,7 @@ through the rotor geometry:
 \begin{bmatrix} f_1 \\ f_2 \\ f_3 \\ f_4 \end{bmatrix}
 ```
 
-The rows hold the rotor lever arms in metres. $`\operatorname{rank}(\mathbf{A}_{\mathrm{alloc}}) = 4`$ and its condition
+The rows hold the rotor lever arms in metres. $`\mathrm{rank}(\mathbf{A}_{\mathrm{alloc}}) = 4`$ and its condition
 number is 62.6, so every feasible pair $`(T, \boldsymbol{\tau})`$ maps to exactly one set of rotor thrusts. The large
 condition number comes from the small yaw arm $`k_m`$: yaw is the weakest axis, which is why the controllers limit the
 yaw rate.
@@ -305,9 +307,9 @@ position).
 Two standard tests were applied, the Kalman rank test and the Popov–Belevitch–Hautus (PBH) test [[8]](#ref-8), where $`n`$ is the number of states:
 
 ```math
-\text{Kalman:}\ \operatorname{rank}\big[\mathbf{B}\ \ \mathbf{A}\mathbf{B}\ \ \mathbf{A}^2\mathbf{B}\ \cdots\ \mathbf{A}^{n-1}\mathbf{B}\big] = n,
+\text{Kalman:}\ \mathrm{rank}\big[\mathbf{B}\ \ \mathbf{A}\mathbf{B}\ \ \mathbf{A}^2\mathbf{B}\ \cdots\ \mathbf{A}^{n-1}\mathbf{B}\big] = n,
 \qquad
-\text{PBH:}\ \operatorname{rank}\big[\lambda\mathbf{I} - \mathbf{A}\ \ \ \mathbf{B}\big] = n\ \ \text{for every eigenvalue}\ \lambda\ \text{of}\ \mathbf{A}.
+\text{PBH:}\ \mathrm{rank}\big[\lambda\mathbf{I} - \mathbf{A}\ \ \ \mathbf{B}\big] = n\ \ \text{for every eigenvalue}\ \lambda\ \text{of}\ \mathbf{A}.
 ```
 
 | Model | States | Inputs | Kalman rank | PBH rank | Result |
@@ -347,7 +349,7 @@ position gain.
 (133 start states, largest 1 s-ahead error 0.25 m) as, per axis,
 
 ```math
-\dot{a} = \frac{\operatorname{clip}\!\big(k_v\,(\operatorname{clip}(k_p\,e,\ v_{\max}) - v),\ a_{\max}\big) - a}{\tau}
+\dot{a} = \frac{\mathrm{clip}\big(k_v\,(\mathrm{clip}(k_p\,e,\ v_{\max}) - v),\ a_{\max}\big) - a}{\tau}
 ```
 
 with position error $`e`$, velocity $`v`$, acceleration $`a`$, attitude lag $`\tau = 0.493`$ s, $`k_p = 0.827\ \mathrm{s^{-1}}`$,
@@ -419,7 +421,7 @@ stateDiagram-v2
 \mathbf{p}_{\mathrm{cmd}} =
 \begin{cases}
 \mathbf{p}_{\mathrm{avoid}}, & \text{if an avoidance proposal is active and passes validation} \\
-\operatorname{limit}\big(\mathbf{p},\ \mathbf{p}_{\mathrm{mission}},\ v_{\mathrm{lim}}\big), & \text{otherwise}
+\mathrm{limit}\big(\mathbf{p},\ \mathbf{p}_{\mathrm{mission}},\ v_{\mathrm{lim}}\big), & \text{otherwise}
 \end{cases}
 ```
 
@@ -570,7 +572,7 @@ J = w_{\mathrm{risk}}\,\mathrm{risk} + w_{\mathrm{dist}}\,\mathrm{deviation} + w
 
 | Term | Definition | Weight |
 |---|---|---|
-| $`\mathrm{risk}`$ | $`\operatorname{clip}(1 - c/1.5\ \mathrm{m},\ 0,\ 1)`$, where $`c`$ is the smallest clearance (separation minus requirement) | $`w_{\mathrm{risk}}`$ = 10 |
+| $`\mathrm{risk}`$ | $`\mathrm{clip}(1 - c/1.5\ \mathrm{m},\ 0,\ 1)`$, where $`c`$ is the smallest clearance (separation minus requirement) | $`w_{\mathrm{risk}}`$ = 10 |
 | $`\mathrm{deviation}`$ | distance of the setpoint from the nominal path (m) | $`w_{\mathrm{dist}}`$ = 1.0 |
 | $`\mathrm{effort}`$ | distance of the setpoint from the present position (m) | $`w_{\mathrm{energy}}`$ = 0.5 |
 | $`\mathrm{change}`$ | distance from the setpoint currently flown (m) | $`w_{\mathrm{smooth}}`$ = 0.5 |
@@ -626,7 +628,7 @@ lidar. `slam_bridge` levels each scan with the vehicle attitude and keeps only r
 of cell $`i`$ to the nearest mapped obstacle:
 
 ```math
-\text{cost}_i = 1 + w_c\,\operatorname{clip}\!\left(1 - \frac{c_i - r_{\mathrm{inf}}}{r_{\mathrm{caution}} - r_{\mathrm{inf}}},\ 0,\ 1\right)\Big|_{c_i < r_{\mathrm{caution}}}
+\text{cost}_i = 1 + w_c\,\mathrm{clip}\left(1 - \frac{c_i - r_{\mathrm{inf}}}{r_{\mathrm{caution}} - r_{\mathrm{inf}}},\ 0,\ 1\right)\Big|_{c_i < r_{\mathrm{caution}}}
 + c_{\mathrm{unknown}}\Big|_{i\ \text{unobserved}},
 \qquad
 g(\text{route}) = \sum_{\text{steps}} \text{cost}_i \times \text{step length}
