@@ -563,7 +563,7 @@ interest (flight altitude minus the 0.9 m target height), with usable-image marg
 <i>W</i> × <i>H</i>, the footprint half-extents (forward <i>ℓ</i><sub><i>f</i></sub>, right <i>ℓ</i><sub><i>r</i></sub>) are
 
 $$
-(\ell_f,\ \ell_r) = m\h\left(\frac{H/2}{f_y}\ \frac{W/2}{f_x}\right)\qquad
+(\ell_f,\ \ell_r) = \left(\frac{H/2}{f_y}\ \frac{W/2}{f_x}\right)\qquad
 s = 2\,\ell_{\perp}\(1 - \omega),\qquad
 n_{\mathrm{lanes}} = \left\lceil \frac{w}{s} \right\rceil
 $$
